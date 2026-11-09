@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAR Intelligence — Enhanced</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070b14;
+  --surface: #0f1726;
+  --surface2: #152033;
+  --ink: #e8eef8;
+  --muted: #8b9cb8;
+  --line: #1e2d42;
+  --accent: #2dd4bf;
+  --accent2: #818cf8;
+  --accent3: #f59e0b;
+  --accent4: #f472b6;
+  --on-accent: #042f2e;
+  --soft: #0f2a2a;
+  --soft2: #1a2040;
+  --ok: #34d399;
+  --ok-soft: #0c2e22;
+  --bad: #f87171;
+  --bad-soft: #3b1515;
+  --warm: #fbbf24;
+  --warm-soft: #3b2a0a;
+  --lband: #f87171;
+  --sband: #34d399;
+  --font: 'Outfit', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --shadow: 0 20px 50px rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg: #f0f4fa;
+  --surface: #ffffff;
+  --surface2: #f7fafc;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --accent: #0d9488;
+  --accent2: #6366f1;
+  --accent3: #d97706;
+  --accent4: #db2777;
+  --on-accent: #ffffff;
+  --soft: #ccfbf1;
+  --soft2: #e0e7ff;
+  --ok: #059669;
+  --ok-soft: #d1fae5;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --warm: #b45309;
+  --warm-soft: #fef3c7;
+  --lband: #b91c1c;
+  --sband: #047857;
+  --shadow: 0 12px 40px rgba(15,23,42,.08);
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--font);
+  padding-bottom: 72px;
+  min-height: 100vh;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(45,212,191,.09), transparent 50%),
+    radial-gradient(ellipse 55% 40% at 90% 5%, rgba(129,140,248,.08), transparent 45%),
+    radial-gradient(ellipse 40% 30% at 70% 90%, rgba(245,158,11,.05), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+/* Header */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--line);
+}
+.top-in {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 62px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.12rem;
+  letter-spacing: -.03em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.logo {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: grid;
+  place-items: center;
+  color: var(--on-accent);
+  font-weight: 900;
+  font-size: 14px;
+  box-shadow: 0 0 22px rgba(45,212,191,.28);
+}
+.tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 8px 11px;
+  border-radius: 8px;
+  white-space: nowrap;
+  font: 600 12.5px/1 var(--font);
+  cursor: pointer;
+  transition: .15s;
+}
+.tabs button:hover { color: var(--ink); background: var(--surface2); }
+.tabs button.active {
+  color: var(--accent);
+  background: var(--soft);
+}
+.theme-btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font: 600 12px var(--font);
+  cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--accent); }
+
+/* Views */
+.view { display: none; padding: 26px 0 48px; animation: fade .22s ease; }
+.view.active { display: block; }
+@keyframes fade { from { opacity: .35; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.1;
+  letter-spacing: -.035em;
+  margin: 0 0 12px;
+  font-weight: 800;
+}
+h2 {
+  font-size: 1.3rem;
+  letter-spacing: -.02em;
+  margin: 34px 0 12px;
+  font-weight: 700;
+}
+h3 { font-size: 1.02rem; margin: 0 0 8px; font-weight: 650; }
+.lead { color: var(--muted); font-size: 1.04rem; max-width: 64ch; margin: 0 0 16px; }
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.note { color: var(--muted); font-size: .85rem; }
+.mono { font-family: var(--mono); font-size: .9em; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Buttons */
+.btn {
+  font: 600 13px var(--font);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: .15s;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary {
+  background: linear-gradient(120deg, var(--accent), #14b8a6);
+  color: var(--on-accent);
+  border: 0;
+  box-shadow: 0 4px 18px rgba(45,212,191,.28);
+}
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.ghost { background: var(--soft); color: var(--accent); border-color: transparent; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+
+/* Cards */
+.panel, .card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  min-width: 0;
+}
+.card { box-shadow: var(--shadow); border-radius: 16px; padding: 20px; }
+.card.tint { background: linear-gradient(145deg, var(--soft), var(--surface)); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.tool {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0,1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 16px;
+}
+.stack { display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .tool { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .grid, .grid.two { grid-template-columns: 1fr; }
+  .tabs { order: 3; flex-basis: 100%; }
+}
+
+/* Form */
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 10px; }
+.fields .full { grid-column: 1 / -1; }
+label {
+  display: grid;
+  gap: 4px;
+  font-size: .68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-weight: 650;
+  min-width: 0;
+}
+label.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+input, select {
+  font: 500 .88rem var(--mono);
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  width: 100%;
+  min-width: 0;
+}
+input[type=range] { padding: 0; accent-color: var(--accent); background: transparent; border: 0; }
+input[type=checkbox] { width: auto; accent-color: var(--accent); }
+.lab-line { display: flex; justify-content: space-between; gap: 8px; }
+
+/* Tables */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  font-weight: 650;
+}
+td.num { font-family: var(--mono); white-space: nowrap; }
+td.f { font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+
+/* Pills */
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: .74rem;
+  font-family: var(--mono);
+  font-weight: 500;
+}
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.warn { background: var(--warm-soft); color: var(--warm); }
+.pill.info { background: var(--soft); color: var(--accent); }
+.pill.l { background: color-mix(in srgb, var(--lband) 18%, transparent); color: var(--lband); }
+.pill.s { background: color-mix(in srgb, var(--sband) 18%, transparent); color: var(--sband); }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.metricbox {
+  padding: 13px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+.metricbox:nth-child(2) { background: var(--soft2); }
+.metricbox:nth-child(3) { background: var(--warm-soft); }
+.metric { font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; }
+.metricbox small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 3px;
+}
+@media (max-width: 560px) { .metrics { grid-template-columns: 1fr 1fr; } }
+
+/* Hero */
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 26px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.heroart {
+  border-radius: 20px;
+  background: linear-gradient(145deg, #0c1a2e, #1a1040 55%, #2a1535);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+.heroart svg { width: 100%; display: block; }
+@media (max-width: 850px) { .hero { grid-template-columns: 1fr; } }
+
+/* SVG */
+svg.fig { width: 100%; height: auto; display: block; }
+svg .ground { stroke: var(--ink); stroke-width: 2; }
+svg .dash { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+svg .ray { stroke: var(--accent); stroke-width: 1.5; }
+svg .beam { fill: var(--accent); fill-opacity: .15; stroke: none; }
+svg .sat { fill: var(--ink); }
+svg .tgt { fill: var(--accent3); }
+svg .arc { stroke: var(--accent3); stroke-width: 1.5; fill: none; }
+svg .brk { stroke: var(--accent3); stroke-width: 1.5; fill: none; }
+svg text { fill: var(--muted); font: 11px var(--mono); }
+svg text.k { fill: var(--ink); }
+
+/* Glossary & facts */
+.defs { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px,1fr)); gap: 0 26px; }
+.defs div { border-top: 1px solid var(--line); padding: 11px 0; }
+.defs dt { font-weight: 650; margin-bottom: 2px; }
+.defs dd { margin: 0; color: var(--muted); font-size: .9rem; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 0 26px; }
+.facts div { border-top: 1px solid var(--line); padding: 9px 0; }
+.facts dt { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 650; }
+.facts dd { margin: 2px 0 0; font-family: var(--mono); font-size: .88rem; }
+
+/* Timeline */
+.tl { list-style: none; margin: 0; padding: 0; }
+.tl li {
+  display: grid;
+  grid-template-columns: 125px minmax(0,1fr);
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+.tl time { font-family: var(--mono); font-size: .8rem; color: var(--accent); font-weight: 500; }
+@media (max-width: 520px) { .tl li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Canvas */
+.cv { display: block; width: 100%; }
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px,1fr));
+  gap: 12px;
+}
+.pair canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #05080e;
+}
+canvas.plot {
+  width: 100%;
+  border-radius: 10px;
+  background: #05080e;
+  border: 1px solid var(--line);
+}
+
+/* Quiz */
+.opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0 0 7px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: .12s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt:disabled { cursor: default; }
+.bar {
+  height: 5px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; }
+
+/* Accordion */
+.acc { border-top: 1px solid var(--line); }
+.acc > button {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  padding: 13px 2px;
+  font: 650 13.5px var(--font);
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 12px;
+}
+.acc .body { display: none; padding: 0 4px 13px; color: var(--muted); }
+.acc.open .body { display: block; }
+
+
+/* Live information sources */
+.source-launcher {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin: 14px 0 24px;
+}
+.source-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--surface2), var(--surface));
+  text-decoration: none;
+  color: var(--ink);
+  transition: .15s;
+}
+.source-link:hover { border-color: var(--accent); transform: translateY(-1px); }
+.source-link strong { color: var(--accent); font-size: .96rem; }
+.source-link span { color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.source-link em { color: var(--accent); font-style: normal; font: 600 .75rem var(--mono); margin-top: 3px; }
+
+/* Banner / note */
+.banner {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 13px 15px;
+  margin: 14px 0;
+}
+.note-box {
+  background: var(--warm-soft);
+  color: var(--warm);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: .88rem;
+  margin: 12px 0;
+}
+
+/* Search */
+.search-wrap { position: relative; flex: 1 1 200px; max-width: 280px; min-width: 0; }
+.search-wrap input { width: 100%; }
+.search-res {
+  position: absolute;
+  left: 0; right: 0;
+  top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  z-index: 30;
+  max-height: 50vh;
+  overflow: auto;
+  box-shadow: var(--shadow);
+}
+.search-res[hidden] { display: none; }
+.search-res button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: 500 13px var(--font);
+}
+.search-res button:hover { background: var(--surface2); }
+.search-res small { display: block; color: var(--muted); font-size: 11px; }
+
+footer {
+  margin-top: 36px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+footer ul { margin: 6px 0 0; padding-left: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#overview">
+      <span class="logo">Σ</span>
+      <span>SAR <span style="color:var(--accent)">Intelligence</span></span>
+    </a>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+    <div class="search-wrap">
+      <input type="search" id="gsearch" placeholder="Search guide…" aria-label="Search" autocomplete="off">
+      <div class="search-res" id="gres" hidden></div>
+    </div>
+    <button class="theme-btn" id="theme" type="button">Light theme</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ========== OVERVIEW ========== -->
+<section class="view active" id="overview">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Mission intelligence · Physics · Simulation</div>
+      <h1>One orbit. Two radars.<br>A living Earth.</h1>
+      <p class="lead">Interactive workspace for Synthetic Aperture Radar — from microwave imaging physics to NASA–ISRO’s NISAR mission, data products, and field-ready insight.</p>
+      <div class="row">
+        <button class="btn primary" data-go="learn">Start exploring</button>
+        <button class="btn" data-go="calculator">Open calculator</button>
+        <button class="btn ghost" data-go="lab">Image lab</button>
+      </div>
+    </div>
+    <div class="heroart">
+      <svg viewBox="0 0 520 300" role="img" aria-label="Satellite illuminating Earth with radar beams">
+        <defs>
+          <linearGradient id="hg" x2="1" y2="1"><stop stop-color="#2dd4bf"/><stop offset="1" stop-color="#818cf8"/></linearGradient>
+          <linearGradient id="earth"><stop stop-color="#0d9488"/><stop offset="1" stop-color="#1e40af"/></linearGradient>
+        </defs>
+        <circle cx="420" cy="62" r="30" fill="#fbbf24" opacity=".85"/>
+        <path d="M0 235 Q140 190 270 240 T520 225 V300 H0Z" fill="url(#earth)"/>
+        <path d="M0 258 Q140 218 270 263 T520 248" fill="none" stroke="#5eead4" stroke-width="2.2" opacity=".5"/>
+        <g transform="translate(175 48) rotate(-12)">
+          <rect x="0" y="0" width="105" height="38" rx="7" fill="#e2e8f0"/>
+          <rect x="-52" y="7" width="45" height="22" rx="2" fill="#334155"/>
+          <path d="M-45 7v22m9-22v22m9-22v22m9-22v22M105 7h45v22h-45" stroke="#94a3b8" stroke-width="1.4" fill="#334155"/>
+          <circle cx="52" cy="19" r="10" fill="url(#hg)"/>
+          <path d="M52 38 L18 165 L220 165Z" fill="#2dd4bf" opacity=".18"/>
+          <path d="M52 38L18 165M52 38L220 165" stroke="#5eead4" stroke-width="1.7" stroke-dasharray="5 4"/>
+        </g>
+        <g fill="#e2e8f0" font-family="IBM Plex Mono, monospace" font-size="11">
+          <text x="18" y="26">MICROWAVE · ACTIVE</text>
+          <text x="18" y="42" opacity=".55">DAY / NIGHT · ALL WEATHER</text>
+          <text x="340" y="280">EARTH SURFACE</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="eyebrow">01</div>
+      <h3>Learn the physics</h3>
+      <p class="note">Range, azimuth, Doppler, speckle, polarimetry, interferometry, and terrain geometry.</p>
+      <button class="btn ghost" data-go="learn" style="margin-top:10px">Explore concepts</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow">02</div>
+      <h3>Mission calculator</h3>
+      <p class="note">Wavelength, resolutions, synthetic aperture, PRF window, and InSAR fringe scale.</p>
+      <button class="btn ghost" data-go="calculator" style="margin-top:10px">Run numbers</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow">03</div>
+      <h3>NISAR field guide</h3>
+      <p class="note">Dual-band mission facts, SweepSAR, product levels, timeline, and challenges.</p>
+      <button class="btn ghost" data-go="nisar" style="margin-top:10px">Open guide</button>
+    </div>
+  </div>
+
+  <div class="card tint">
+    <div class="eyebrow">Mission pulse · NISAR</div>
+    <div class="metrics" style="margin-top:10px">
+      <div class="metricbox"><small>Orbit altitude</small><div class="metric">747 km</div></div>
+      <div class="metricbox"><small>Repeat cycle</small><div class="metric">12 days</div></div>
+      <div class="metricbox"><small>Reflector</small><div class="metric">12 m</div></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">NASA L-band (~24 cm) + ISRO S-band (~9.4 cm) on one spacecraft. Global land and ice coverage every 12 days via SweepSAR (~242 km swath).</p>
+  </div>
+</section>
+
+<!-- ========== LEARN ========== -->
+<section class="view" id="learn">
+  <div class="eyebrow">Foundations</div>
+  <h1>How synthetic aperture radar images the Earth</h1>
+  <p class="lead">A SAR sends microwave pulses sideways from a moving platform and records the echoes. It brings its own illumination and uses wavelengths that pass through cloud, so it images day and night in any weather.</p>
+  <div class="row">
+    <button class="btn primary" data-go="calculator">Open calculator</button>
+    <button class="btn" data-go="simulator">Pulse simulator</button>
+    <button class="btn" data-go="geometry">Terrain geometry</button>
+  </div>
+
+  <div class="grid two" style="margin-top:22px">
+    <figure class="panel">
+      <svg class="fig" viewBox="0 0 360 230" role="img" aria-label="Side-looking geometry">
+        <path class="beam" d="M90 32 L168 198 L300 198 Z"/>
+        <line class="ground" x1="16" y1="198" x2="348" y2="198"/>
+        <line class="dash" x1="90" y1="32" x2="90" y2="198"/>
+        <line class="ray" x1="90" y1="32" x2="168" y2="198"/>
+        <line class="ray" x1="90" y1="32" x2="300" y2="198"/>
+        <rect class="sat" x="80" y="20" width="20" height="12" rx="1"/>
+        <path class="arc" d="M168 172 A26 26 0 0 0 157 174"/>
+        <text x="120" y="162" class="k">θ</text>
+        <text x="98" y="18">satellite</text>
+        <text x="95" y="118">nadir</text>
+        <text x="145" y="100">slant range R</text>
+        <text x="168" y="216" text-anchor="middle">near range</text>
+        <text x="300" y="216" text-anchor="middle">far range</text>
+        <line class="brk" x1="168" y1="224" x2="300" y2="224"/>
+        <text x="234" y="188" text-anchor="middle" class="k">swath</text>
+      </svg>
+      <p class="note" style="margin-top:8px">Range geometry. Echo delay maps to slant range. θ is the incidence angle at the ground.</p>
+    </figure>
+    <figure class="panel">
+      <svg class="fig" viewBox="0 0 360 230" role="img" aria-label="Azimuth synthetic aperture">
+        <ellipse class="beam" cx="180" cy="186" rx="88" ry="18"/>
+        <line class="ground" x1="24" y1="38" x2="336" y2="38"/>
+        <polygon class="sat" points="336,38 326,33 326,43"/>
+        <line class="ray" x1="90" y1="38" x2="180" y2="186"/>
+        <line class="ray" x1="180" y1="38" x2="180" y2="186"/>
+        <line class="ray" x1="270" y1="38" x2="180" y2="186"/>
+        <rect class="sat" x="85" y="33" width="10" height="10"/><rect class="sat" x="175" y="33" width="10" height="10"/><rect class="sat" x="265" y="33" width="10" height="10"/>
+        <circle class="tgt" cx="180" cy="186" r="5"/>
+        <path class="brk" d="M90 60 V68 H270 V60"/>
+        <text x="180" y="86" text-anchor="middle" class="k">L_sa ≈ λR / L</text>
+        <text x="26" y="24">azimuth (flight direction)</text>
+        <text x="180" y="216" text-anchor="middle">real beam footprint</text>
+      </svg>
+      <p class="note" style="margin-top:8px">One target stays in the beam while the platform travels L_sa. Coherent combination synthesizes a long antenna.</p>
+    </figure>
+  </div>
+
+  <h2>Core ideas</h2>
+  <dl class="defs">
+    <div><dt>Real vs synthetic aperture</dt><dd>A real antenna resolves azimuth at ~R·λ/L (kilometres from orbit). A SAR combines echoes along-track as if a very long antenna had been used.</dd></div>
+    <div><dt>Range resolution = c / 2B</dt><dd>Set by transmitted bandwidth. A linear FM chirp + matched filter compresses a long pulse into a short, sharp one.</dd></div>
+    <div><dt>Azimuth resolution ≈ L / 2</dt><dd>For stripmap mode it does not depend on range or wavelength. A shorter antenna gives a wider beam and longer synthetic aperture.</dd></div>
+    <div><dt>Doppler history</dt><dd>As the platform passes a target, the echo frequency sweeps through a Doppler chirp. Azimuth compression exploits this phase history.</dd></div>
+    <div><dt>PRF window</dt><dd>PRF must exceed the Doppler bandwidth (~2v/L) and stay below the range-ambiguity limit set by the slant-range swath.</dd></div>
+    <div><dt>Speckle</dt><dd>Scatterers inside one resolution cell interfere coherently → grainy texture. Multilooking averages it down at the cost of resolution.</dd></div>
+    <div><dt>Polarimetry</dt><dd>HH, HV, VH, VV respond differently to rough surfaces, volume scattering (vegetation) and double-bounce (buildings).</dd></div>
+    <div><dt>Interferometry</dt><dd>Phase difference between two passes measures line-of-sight motion. One fringe = half a wavelength of displacement.</dd></div>
+  </dl>
+
+  <h2>Radar bands</h2>
+  <div class="card tablewrap">
+    <table>
+      <thead><tr><th>Band</th><th>Frequency</th><th>Wavelength</th><th>Typical use</th><th>Examples</th><th></th></tr></thead>
+      <tbody>
+        <tr><td class="num">P</td><td class="num">0.3–1 GHz</td><td class="num">30–100 cm</td><td>Dense forest, biomass</td><td>ESA BIOMASS</td><td><button class="btn" data-f="0.435" type="button">Use</button></td></tr>
+        <tr><td class="num">L</td><td class="num">1–2 GHz</td><td class="num">15–30 cm</td><td>Forest, soil moisture, InSAR</td><td>ALOS-2, NISAR</td><td><button class="btn" data-f="1.257" type="button">Use</button></td></tr>
+        <tr><td class="num">S</td><td class="num">2–4 GHz</td><td class="num">7.5–15 cm</td><td>Crops, vegetation structure</td><td>NISAR S-SAR</td><td><button class="btn" data-f="3.2" type="button">Use</button></td></tr>
+        <tr><td class="num">C</td><td class="num">4–8 GHz</td><td class="num">3.75–7.5 cm</td><td>Land, ocean, ice</td><td>Sentinel-1</td><td><button class="btn" data-f="5.405" type="button">Use</button></td></tr>
+        <tr><td class="num">X</td><td class="num">8–12 GHz</td><td class="num">2.5–3.75 cm</td><td>Urban, infrastructure</td><td>TerraSAR-X</td><td><button class="btn" data-f="9.65" type="button">Use</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:6px">“Use” loads that centre frequency into the calculator.</p>
+
+  <h2>Glossary</h2>
+  <label for="gl-q" style="max-width:320px;display:block;margin-bottom:8px">Filter terms
+    <input id="gl-q" type="search" placeholder="Try: doppler, layover, SLC, SweepSAR">
+  </label>
+  <dl id="gl-list"></dl>
+</section>
+
+<!-- ========== CALCULATOR ========== -->
+<section class="view" id="calculator">
+  <div class="eyebrow">Engineering tools</div>
+  <h1>Mission calculator</h1>
+  <p class="lead">Enter radar and orbit parameters for resolution, synthetic aperture, PRF limits and interferometric scale. Presets use approximate public figures.</p>
+  <div class="tool">
+    <div class="panel">
+      <label for="c-preset">Preset
+        <select id="c-preset">
+          <option value="nisarL">NISAR L-band</option>
+          <option value="nisarS">NISAR S-band</option>
+          <option value="s1">Sentinel-1 (C-band)</option>
+          <option value="alos2">ALOS-2 (L-band)</option>
+          <option value="tsx">TerraSAR-X (X-band)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <div class="fields">
+        <label>Frequency (GHz)<input id="c-f" type="number" step="0.001" min="0.05" value="1.257"></label>
+        <label>Bandwidth (MHz)<input id="c-b" type="number" step="1" min="1" value="80"></label>
+        <label>Antenna length L (m)<input id="c-l" type="number" step="0.1" min="0.05" value="12"></label>
+        <label>Antenna height W (m)<input id="c-w" type="number" step="0.1" min="0.05" value="2.5"></label>
+        <label>Altitude (km)<input id="c-h" type="number" step="1" min="0.5" value="747"></label>
+        <label>Incidence angle (°)<input id="c-th" type="number" step="0.5" min="10" max="85" value="37"></label>
+        <label>Platform speed (m/s)<input id="c-v" type="number" step="10" min="10" value="7480"></label>
+        <label>Swath (slant, km)<input id="c-sw" type="number" step="1" min="1" value="50"></label>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="calc-btn" type="button">Calculate</button>
+        <button class="btn" id="copy-btn" type="button">Copy results</button>
+      </div>
+      <p class="note" id="calc-status" style="margin-top:8px" aria-live="polite"></p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Results</h3>
+        <div class="metrics" id="metrics">
+          <div class="metricbox"><small>Wavelength</small><div class="metric" id="m-wave">—</div></div>
+          <div class="metricbox"><small>Slant-range res.</small><div class="metric" id="m-rs">—</div></div>
+          <div class="metricbox"><small>Ground-range res.</small><div class="metric" id="m-rg">—</div></div>
+          <div class="metricbox"><small>Azimuth res.</small><div class="metric" id="m-az">—</div></div>
+          <div class="metricbox"><small>Synthetic aperture</small><div class="metric" id="m-lsa">—</div></div>
+          <div class="metricbox"><small>One InSAR fringe</small><div class="metric" id="m-fringe">—</div></div>
+        </div>
+        <p class="note" id="prf-out" style="margin-top:12px"></p>
+      </div>
+      <div class="panel">
+        <h3>Illustrative ground-range resolution vs bandwidth</h3>
+        <canvas class="plot" id="trade" width="720" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SIMULATOR (pulse) ========== -->
+<section class="view" id="simulator">
+  <div class="eyebrow">Signal playground</div>
+  <h1>Pulse compression simulator</h1>
+  <p class="lead">See how bandwidth and weighting change the compressed pulse. Windowing lowers sidelobes but broadens the main lobe.</p>
+  <div class="tool">
+    <div class="panel">
+      <label>Bandwidth <span class="mono" id="sa-bo">60 MHz</span>
+        <input id="sa-b" type="range" min="10" max="150" step="5" value="60">
+      </label>
+      <label style="margin-top:14px">Pulse duration <span class="mono" id="sa-to">20 µs</span>
+        <input id="sa-t" type="range" min="5" max="40" step="1" value="20">
+      </label>
+      <label style="margin-top:14px">Weighting window
+        <select id="sa-w">
+          <option value="rect">Rectangular</option>
+          <option value="hann">Hann</option>
+          <option value="hamming" selected>Hamming</option>
+        </select>
+      </label>
+      <p class="note" style="margin-top:12px">Idealized matched-filter response for teaching. Real processors use more sophisticated weighting and range migration correction.</p>
+    </div>
+    <div class="panel">
+      <canvas class="plot" id="cv-pulse" width="720" height="280"></canvas>
+      <div class="tablewrap" style="margin-top:12px">
+        <table id="sa-out"><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== GEOMETRY ========== -->
+<section class="view" id="geometry">
+  <div class="eyebrow">Terrain effects</div>
+  <h1>Layover, foreshortening & shadow</h1>
+  <p class="lead">Adjust incidence angle and slope angles to see how a hill maps into slant range. Front slopes steeper than the incidence angle produce layover.</p>
+  <div class="tool">
+    <div class="panel">
+      <label>Incidence angle θ <span class="mono" id="g-tho">35°</span>
+        <input id="g-th" type="range" min="15" max="60" step="1" value="35">
+      </label>
+      <label style="margin-top:12px">Hill height <span class="mono" id="g-ho">300 m</span>
+        <input id="g-h" type="range" min="50" max="800" step="10" value="300">
+      </label>
+      <label style="margin-top:12px">Front slope α<sub>f</sub> <span class="mono" id="g-afo">25°</span>
+        <input id="g-af" type="range" min="5" max="70" step="1" value="25">
+      </label>
+      <label style="margin-top:12px">Back slope α<sub>b</sub> <span class="mono" id="g-abo">30°</span>
+        <input id="g-ab" type="range" min="5" max="80" step="1" value="30">
+      </label>
+      <div class="tablewrap" style="margin-top:14px">
+        <table id="g-out"><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <canvas class="plot" id="cv-geo" width="720" height="420"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ========== IMAGE LAB ========== -->
+<section class="view" id="lab">
+  <div class="eyebrow">Visual analytics</div>
+  <h1>SAR image lab</h1>
+  <p class="lead">Generate a synthetic radar scene and explore false-colour composites, polarization channels and multilooking. Educational simulation — not real satellite data.</p>
+  <div class="tool">
+    <div class="panel">
+      <label>Scene type
+        <select id="scene">
+          <option value="land">Farmland, river & road</option>
+          <option value="urban">Urban blocks</option>
+          <option value="forest">Forest & clearings</option>
+          <option value="coast">Coast & water</option>
+        </select>
+      </label>
+      <label style="margin-top:12px">Colour composite
+        <select id="composite">
+          <option value="fcc">False colour (HH / HV / VV)</option>
+          <option value="natural">Balanced RGB</option>
+          <option value="hh">HH intensity</option>
+          <option value="hv">HV intensity</option>
+          <option value="vv">VV intensity</option>
+        </select>
+      </label>
+      <label style="margin-top:12px">Multilooks <span class="mono" id="looksOut">1 look</span>
+        <input id="looks" type="range" min="1" max="8" step="1" value="1">
+      </label>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="regen" type="button">Regenerate</button>
+        <button class="btn" id="download" type="button">Save PNG</button>
+      </div>
+      <p class="note" id="legend" style="margin-top:10px">Red: HH · Green: HV · Blue: VV</p>
+    </div>
+    <div class="panel">
+      <canvas id="sarimg" width="640" height="400" style="width:100%;border-radius:10px;background:#05080e;border:1px solid var(--line)"></canvas>
+      <p class="note" id="sceneCaption" style="margin-top:8px">Synthetic scene with coherent speckle.</p>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:18px">
+    <div class="card"><span class="pill l">L-BAND</span><h3 style="margin-top:8px">Longer wavelength</h3><p class="note">More interaction with trunks and larger structure; preferred for biomass and deformation.</p></div>
+    <div class="card"><span class="pill s">S-BAND</span><h3 style="margin-top:8px">Shorter wavelength</h3><p class="note">More responsive to finer vegetation and agricultural canopy structure.</p></div>
+    <div class="card"><span class="pill info">RGB</span><h3 style="margin-top:8px">False-colour reading</h3><p class="note">Channel assignment is a display choice. Always check the legend before interpretation.</p></div>
+  </div>
+</section>
+
+<!-- ========== NISAR ========== -->
+<section class="view" id="nisar">
+  <div class="eyebrow">Mission field guide</div>
+  <h1>NISAR: two radars, one observatory</h1>
+  <p class="lead">The NASA–ISRO Synthetic Aperture Radar mission combines L-band and S-band observations to study changes across Earth’s land and ice surfaces.</p>
+
+  <div class="grid two">
+    <div class="card tint">
+      <span class="pill l">NASA · L-BAND</span>
+      <h2 style="margin-top:8px">~24 cm wavelength</h2>
+      <p class="note">Best for forest structure, biomass, soil moisture and surface deformation. Longer wavelengths penetrate further into vegetation.</p>
+      <dl class="facts" style="margin-top:10px">
+        <div><dt>Coverage</dt><dd>Global</dd></div>
+        <div><dt>Archive</dt><dd>ASF DAAC / Earthdata</dd></div>
+        <div><dt>Public release</dt><dd>20 July 2026 (provisional)</dd></div>
+      </dl>
+    </div>
+    <div class="card tint">
+      <span class="pill s">ISRO · S-BAND</span>
+      <h2 style="margin-top:8px">~9.4 cm wavelength</h2>
+      <p class="note">Adds sensitivity to crops and finer vegetation, supporting science and applications important to India.</p>
+      <dl class="facts" style="margin-top:10px">
+        <div><dt>Coverage</dt><dd>India + global sites</dd></div>
+        <div><dt>Archive</dt><dd>Bhoonidhi / NRSC</dd></div>
+        <div><dt>Operational</dt><dd>Cycle 25 · 8 July 2026</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="eyebrow">Instrument</div><h3>12 m mesh reflector</h3><p class="note">Large deployable antenna shared by both radars. Fully deployed 17 days after launch.</p></div>
+    <div class="card"><div class="eyebrow">Mode</div><h3>SweepSAR</h3><p class="note">Digital beamforming on receive yields ~242 km swath at full resolution — solving the classic swath–resolution trade-off.</p></div>
+    <div class="card"><div class="eyebrow">Orbit</div><h3>747 km · 12-day repeat</h3><p class="note">Sun-synchronous, inclination 98.4°. Ascending and descending passes over the same ground track.</p></div>
+  </div>
+
+  <h2>Coverage check</h2>
+  <div class="tool">
+    <div class="panel">
+      <label>Altitude (km)<input id="n-alt" type="number" value="747" step="1"></label>
+      <label style="margin-top:10px">Swath width (km)<input id="n-sw" type="number" value="242" step="1"></label>
+      <label style="margin-top:10px">Orbits per cycle<input id="n-orb" type="number" value="173" step="1"></label>
+      <label style="margin-top:10px">Cycle length (days)<input id="n-days" type="number" value="12" step="1"></label>
+    </div>
+    <div class="panel">
+      <table id="n-out"><tbody></tbody></table>
+    </div>
+  </div>
+
+  <h2>Mission timeline</h2>
+  <div class="card">
+    <ol class="tl">
+      <li><time>30 JUL 2025</time><div><b>Launch on GSLV-F16</b><p class="note">Lift-off from Sriharikota; target orbit ~747 km, sun-synchronous.</p></div></li>
+      <li><time>+17 DAYS</time><div><b>Reflector fully deployed</b><p class="note">Staged hinge sequence completed successfully.</p></div></li>
+      <li><time>23 JAN 2026</time><div><b>First L-band sample products</b><p class="note">Level 1–3 samples for users to test access and metadata.</p></div></li>
+      <li><time>27 FEB 2026</time><div><b>L-band BETA release</b><p class="note">&gt;100 000 products via ASF DAAC; early products not fully calibrated.</p></div></li>
+      <li><time>8 JUL 2026</time><div><b>S-band Cycle 25 operations</b><p class="note">Operational production from Cycle 25; baseline v1.4.0 (CRID P00500).</p></div></li>
+      <li><time>20 JUL 2026</time><div><b>L-band PROVISIONAL release</b><p class="note">Calibrated products from 17 June 2026 onward (CRID P05023).</p></div></li>
+      <li><time>NOV 2026</time><div><b>First VALIDATED collections</b><p class="note">Validated L-band collections; SME2 soil-moisture products remained provisional.</p></div></li>
+    </ol>
+  </div>
+  <div class="note-box"><b>Note.</b> Release dates and processing baselines change. Always confirm current status on official NASA/ASF DAAC and ISRO/Bhoonidhi pages.</div>
+</section>
+
+<!-- ========== PRODUCTS ========== -->
+<section class="view" id="products">
+  <div class="eyebrow">Data products</div>
+  <h1>Find the right NISAR product</h1>
+  <p class="lead">Filter by name, level or science goal. Pixel spacings follow the supplied NISAR Data Guide.</p>
+
+  <div class="card">
+    <div class="row" style="margin:0 0 12px">
+      <input type="search" id="productSearch" placeholder="Search products, e.g. deformation or GCOV" style="flex:1;min-width:180px" aria-label="Search products">
+      <select id="levelFilter" style="max-width:160px">
+        <option value="all">All levels</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+      </select>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Product</th><th>Level</th><th>Pixel spacing</th><th>Geocoded</th><th>Description</th></tr></thead>
+        <tbody id="productRows"></tbody>
+      </table>
+    </div>
+    <p id="productCount" class="note" style="margin-top:8px"></p>
+  </div>
+
+  <h2>Choose by science goal</h2>
+  <div class="grid" id="goalCards"></div>
+</section>
+
+<!-- ========== CHALLENGES ========== -->
+<section class="view" id="problems">
+  <div class="eyebrow">Mission engineering</div>
+  <h1>Challenges & solutions</h1>
+  <p class="lead">Technical and operational issues drawn from the NISAR Data Guide and public mission history.</p>
+  <div id="problemCards"></div>
+</section>
+
+<!-- ========== QUIZ ========== -->
+<section class="view" id="quiz">
+  <div class="eyebrow">Knowledge check</div>
+  <h1>Test your SAR knowledge</h1>
+  <p class="lead">Ten questions covering physics, geometry and the NISAR mission.</p>
+  <div class="card" style="max-width:720px" id="quiz-box"></div>
+</section>
+
+<!-- ========== SOURCES ========== -->
+<section class="view" id="sources">
+  <div class="eyebrow">References</div>
+  <h1>Sources</h1>
+  <p class="lead">This enhanced guide synthesises the four supplied interactive documents and the official NASA / JPL / ASF / ISRO pages listed below. Always verify operational numbers, release dates and product baselines on the live portals before using them.</p>
+
+  <div class="panel" style="margin:18px 0 26px;border-color:var(--accent)">
+    <div class="eyebrow">Quick access · live information</div>
+    <h2 style="margin:4px 0 6px">Official NISAR information &amp; data portals</h2>
+    <p class="note" style="margin:0 0 12px">Open these separate source links for mission facts, current data availability, product specifications, release notes and data downloads. External links open in a new tab.</p>
+    <div class="source-launcher">
+      <a class="source-link" href="https://science.nasa.gov/mission/nisar/" target="_blank" rel="noopener noreferrer">
+        <strong>NASA · NISAR Mission</strong>
+        <span>Mission overview, science objectives, mission status and data-access entry points.</span>
+        <em>Open NASA mission page ↗</em>
+      </a>
+      <a class="source-link" href="https://nisar-docs.asf.alaska.edu/availability-overview/" target="_blank" rel="noopener noreferrer">
+        <strong>ASF DAAC · Data availability</strong>
+        <span>Current L-band collection availability, maturity levels and access guidance.</span>
+        <em>Check live availability ↗</em>
+      </a>
+      <a class="source-link" href="https://science.nasa.gov/mission/nisar/about-the-satellite" target="_blank" rel="noopener noreferrer">
+        <strong>NASA Science · About the satellite</strong>
+        <span>Satellite design, instruments and spacecraft details.</span>
+        <em>Explore the satellite ↗</em>
+      </a>
+      <a class="source-link" href="https://jpl.nasa.gov/press-kits/nisar/mission-overview" target="_blank" rel="noopener noreferrer">
+        <strong>NASA/JPL · NISAR press kit</strong>
+        <span>Mission overview and press-kit background from the Jet Propulsion Laboratory.</span>
+        <em>Open mission overview ↗</em>
+      </a>
+      <a class="source-link" href="https://nisar-docs.asf.alaska.edu/products-overview/" target="_blank" rel="noopener noreferrer">
+        <strong>ASF DAAC · Product guide</strong>
+        <span>Descriptions of NISAR products, processing levels and intended use.</span>
+        <em>Browse product documentation ↗</em>
+      </a>
+      <a class="source-link" href="https://asf.alaska.edu/notices/nisar-l-band-data-now-publicly-available/" target="_blank" rel="noopener noreferrer">
+        <strong>ASF · L-band release notice</strong>
+        <span>Official archive announcement and information about public L-band data.</span>
+        <em>Read release notice ↗</em>
+      </a>
+      <a class="source-link" href="https://www.isro.gov.in/NISARS_Band_SAR_Data_Products_Release.html" target="_blank" rel="noopener noreferrer">
+        <strong>ISRO · S-band release</strong>
+        <span>ISRO's release note covering S-band products, processing baseline and calibration status.</span>
+        <em>Read ISRO release ↗</em>
+      </a>
+      <a class="source-link" href="https://bhoonidhi.nrsc.gov.in/NISAR/" target="_blank" rel="noopener noreferrer">
+        <strong>ISRO / NRSC · NISAR information</strong>
+        <span>Product catalogue, S-band information, access mechanisms and supporting resources.</span>
+        <em>Open NISAR portal ↗</em>
+      </a>
+      <a class="source-link" href="https://bhoonidhi.nrsc.gov.in/" target="_blank" rel="noopener noreferrer">
+        <strong>Bhoonidhi · Data access</strong>
+        <span>Search, view and download available Earth-observation datasets, including NISAR S-band.</span>
+        <em>Open data portal ↗</em>
+      </a>
+      <a class="source-link" href="https://science.nasa.gov/mission/nisar/mission-overview/" target="_blank" rel="noopener noreferrer">
+        <strong>NASA · Mission quick facts</strong>
+        <span>Orbit, repeat cycle, wavelength, coverage and mission specifications.</span>
+        <em>View mission facts ↗</em>
+      </a>
+    </div>
+    <p class="note" style="margin:8px 0 0">Source priority: NASA / JPL, ISRO / NRSC and ASF DAAC. For operational use, check the latest portal notices rather than relying on a static date or baseline shown elsewhere in this guide.</p>
+  </div>
+
+  <h2>Supplied interactive references</h2>
+  <div class="card">
+    <ol style="padding-left:1.2em;line-height:1.75">
+      <li><b>NISAR Data Guide</b> (supplied <code>index.html</code>) — product catalogue, science goals, problems &amp; solutions, S-band release notes, SweepSAR geometry and timing diagrams.</li>
+      <li><b>SAR Lab</b> (supplied <code>SAR Lab.html</code>) — core SAR physics, mission calculator, pulse-compression simulator, scene imaging, terrain geometry, quiz.</li>
+      <li><b>SAR Studio</b> (supplied <code>SAR_Studio.html</code>) — compact educational synthesis of physics + NISAR overview.</li>
+      <li><b>SAR Intelligence</b> (supplied <code>SAR_Intelligence.html</code>) — unified dark-theme workspace combining the above.</li>
+    </ol>
+  </div>
+
+  <h2>Official &amp; primary sources</h2>
+  <div class="card">
+    <ol class="src" style="padding-left:1.2em;line-height:1.8">
+      <li><b>NISAR S-band data release file</b> (user-provided PDF) — original product and release notes used by the Data Guide.</li>
+      <li><a href="https://www.earthdata.nasa.gov/data/alerts-outages/nisar-l-band-data-now-publicly-available" target="_blank" rel="noopener">NASA Earthdata: NISAR L-band data now publicly available</a> (21 July 2026)</li>
+      <li><a href="https://earthdata.nasa.gov/data/alerts-outages/over-100000-new-data-files-available-from-nisar" target="_blank" rel="noopener">NASA Earthdata: Over 100,000 new data files from NISAR</a> (27 February 2026)</li>
+      <li><a href="https://nisar-docs.asf.alaska.edu/availability-overview/" target="_blank" rel="noopener">ASF DAAC: NISAR data availability overview</a></li>
+      <li><a href="https://science.nasa.gov/mission/nisar/about-the-satellite" target="_blank" rel="noopener">NASA Science: About the NISAR satellite</a></li>
+      <li><a href="https://jpl.nasa.gov/press-kits/nisar/mission-overview" target="_blank" rel="noopener">NASA/JPL NISAR press kit: Mission overview</a></li>
+      <li><a href="https://nisar-docs.asf.alaska.edu/provisional-known-issues/" target="_blank" rel="noopener">ASF DAAC: Provisional product known issues</a> (30 July 2026)</li>
+      <li><a href="https://nisar-docs.asf.alaska.edu/product-known-issues" target="_blank" rel="noopener">ASF DAAC: Pre-calibration product known issues</a></li>
+      <li><a href="https://nisar.jpl.nasa.gov/mission/observatory/antenna-reflector" target="_blank" rel="noopener">NASA JPL: NISAR antenna reflector</a></li>
+      <li><a href="https://science.nasa.gov/missions/nisar/nasas-work-on-nisars-antenna-reflector-nears-completion/" target="_blank" rel="noopener">NASA Science: Work on NISAR’s antenna reflector nears completion</a></li>
+      <li><a href="https://spacenews.com/nisar-planned-to-launch-in-march-2025-after-antenna-repairs" target="_blank" rel="noopener">SpaceNews: NISAR planned to launch in March 2025 after antenna repairs</a></li>
+      <li><a href="https://nisar.jpl.nasa.gov/documents/75/8-NISAR_Rosen_Countdown_to_NISAR_v4.pdf" target="_blank" rel="noopener">NASA JPL: Countdown to NISAR</a> (2022 community workshop PDF)</li>
+      <li><a href="https://nisar.jpl.nasa.gov/" target="_blank" rel="noopener">NASA JPL NISAR mission home</a></li>
+      <li><a href="https://www.earthdata.nasa.gov/sensors/nisar" target="_blank" rel="noopener">NASA Earthdata NISAR sensor page</a></li>
+      <li><a href="https://bhoonidhi.nrsc.gov.in/" target="_blank" rel="noopener">ISRO / NRSC Bhoonidhi</a> — primary S-band distribution platform</li>
+      <li>ISRO launch log / GSLV-F16 NISAR timeline (mission chronology)</li>
+    </ol>
+  </div>
+
+  <div class="note-box" style="margin-top:18px">
+    <b>Caveats.</b> Swath width appears as about 240, 242 and 244 km across the source material; this guide uses ~242 km. Wavelengths (~24 cm L-band, ~9.4 cm S-band) come from secondary explainers — confirm against the official NISAR handbook before formal citation. Release dates, CRID baselines and product maturity change; always check the current ASF DAAC and Bhoonidhi pages before operational use. Calculator, simulators and image-lab outputs are educational models, not mission-grade processing tools.
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>SAR Intelligence Enhanced · Educational synthesis of the supplied references. Calculator, simulators and image lab are illustrative models, not mission-grade processing tools. Checked against source material as of November 2026.</p>
+</footer>
+
+<script>
+/* ========== utilities ========== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const C = 299792458, RE = 6371e3, MU = 3.986004418e14, D2R = Math.PI / 180;
+const MONO = 'IBM Plex Mono, ui-monospace, monospace';
+function num(id) { return parseFloat($('#' + id).value); }
+function sig(x, d = 2) { return Number.isFinite(x) ? (+x).toPrecision(d).replace(/\.?0+$/, '') : '—'; }
+function len(m) {
+  if (!Number.isFinite(m)) return '—';
+  if (Math.abs(m) >= 1000) return (m / 1000).toFixed(2) + ' km';
+  if (Math.abs(m) >= 1) return m.toFixed(2) + ' m';
+  return (m * 100).toFixed(1) + ' cm';
+}
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function schedule(fn) { cancelAnimationFrame(schedule._r); schedule._r = requestAnimationFrame(fn); }
+function bindOut(id, out, fmt) {
+  const el = $('#' + id), o = $('#' + out);
+  const upd = () => { o.textContent = fmt(el.value); };
+  el.addEventListener('input', upd); upd();
+}
+
+/* ========== navigation ========== */
+const TABS = [
+  ['overview', 'Overview'],
+  ['learn', 'Learn'],
+  ['calculator', 'Calculator'],
+  ['simulator', 'Simulator'],
+  ['geometry', 'Geometry'],
+  ['lab', 'Image lab'],
+  ['nisar', 'NISAR'],
+  ['products', 'Products'],
+  ['problems', 'Challenges'],
+  ['quiz', 'Quiz'],
+  ['sources', 'Sources']
+];
+let current = 'overview';
+function go(id) {
+  if (!TABS.some(t => t[0] === id)) id = 'overview';
+  current = id;
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === id));
+  $$('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.go === id));
+  history.replaceState(null, '', '#' + id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // refresh live views
+  if (id === 'calculator') calc();
+  if (id === 'simulator') drawPulse();
+  if (id === 'geometry') drawGeo();
+  if (id === 'lab') drawSAR();
+  if (id === 'nisar') nisarCalc();
+}
+$('#tabs').innerHTML = TABS.map(([id, t]) => `<button type="button" data-go="${id}">${t}</button>`).join('');
+$$('#tabs button, [data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+window.addEventListener('hashchange', () => go(location.hash.slice(1) || 'overview'));
+if (location.hash) go(location.hash.slice(1));
+
+/* ========== theme ========== */
+$('#theme').onclick = () => {
+  const dark = document.documentElement.dataset.theme !== 'light';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  $('#theme').textContent = dark ? 'Dark theme' : 'Light theme';
+  drawTrade(); drawPulse(); drawGeo();
+};
+
+/* ========== calculator ========== */
+const PRESETS = {
+  nisarL: [1.257, 80, 12, 2.5, 747, 37, 7480, 50],
+  nisarS: [3.2, 80, 12, 2.5, 747, 37, 7480, 50],
+  s1: [5.405, 56.5, 12.3, 0.8, 693, 39, 7500, 80],
+  alos2: [1.27, 84, 9.9, 3.1, 628, 35, 7600, 70],
+  tsx: [9.65, 150, 4.8, 0.7, 514, 35, 7600, 30]
+};
+$('#c-preset').onchange = () => {
+  const p = PRESETS[$('#c-preset').value];
+  if (!p) return;
+  ['c-f','c-b','c-l','c-w','c-h','c-th','c-v','c-sw'].forEach((id, i) => $('#' + id).value = p[i]);
+  calc();
+};
+function calc() {
+  const f = num('c-f'), B = num('c-b') * 1e6, L = num('c-l'), W = num('c-w');
+  const H = num('c-h') * 1e3, th = num('c-th') * D2R, v = num('c-v'), sw = num('c-sw') * 1e3;
+  if (![f, B, L, H, th, v].every(x => Number.isFinite(x) && x > 0) || th >= Math.PI / 2) {
+    $('#calc-status').textContent = 'Enter positive values and incidence < 90°.';
+    return;
+  }
+  const lam = C / (f * 1e9);
+  const rs = C / (2 * B);
+  const rg = rs / Math.sin(th);
+  const az = L / 2;
+  const R = H / Math.sin(th);
+  const lsa = lam * R / L;
+  const fringe = lam / 2 * 1e3; // mm
+  $('#m-wave').textContent = (lam * 100).toFixed(2) + ' cm';
+  $('#m-rs').textContent = rs.toFixed(2) + ' m';
+  $('#m-rg').textContent = rg.toFixed(2) + ' m';
+  $('#m-az').textContent = az.toFixed(2) + ' m';
+  $('#m-lsa').textContent = (lsa / 1000).toFixed(1) + ' km';
+  $('#m-fringe').textContent = fringe.toFixed(1) + ' mm';
+  const fd = 2 * v / L;
+  const prfMax = C / (2 * sw);
+  $('#prf-out').textContent = `Doppler bandwidth floor ≈ ${fd.toFixed(0)} Hz (2v/L). Range-ambiguity ceiling for ${num('c-sw')} km slant swath ≈ ${prfMax.toFixed(0)} Hz. Actual PRF design also respects timing and ambiguity constraints.`;
+  $('#calc-status').textContent = 'Updated from current inputs.';
+  drawTrade();
+}
+$('#calc-btn').onclick = calc;
+['c-f','c-b','c-l','c-w','c-h','c-th','c-v','c-sw'].forEach(id => $('#' + id).addEventListener('input', calc));
+$('#copy-btn').onclick = () => {
+  const t = [
+    'SAR calculator results',
+    'Wavelength: ' + $('#m-wave').textContent,
+    'Slant-range res.: ' + $('#m-rs').textContent,
+    'Ground-range res.: ' + $('#m-rg').textContent,
+    'Azimuth res.: ' + $('#m-az').textContent,
+    'Synthetic aperture: ' + $('#m-lsa').textContent,
+    'One InSAR fringe: ' + $('#m-fringe').textContent,
+    $('#prf-out').textContent
+  ].join('\n');
+  navigator.clipboard?.writeText(t).then(() => $('#calc-status').textContent = 'Results copied.')
+    .catch(() => $('#calc-status').textContent = 'Clipboard unavailable.');
+};
+// band table "Use" buttons
+$$('[data-f]').forEach(b => b.addEventListener('click', () => {
+  $('#c-f').value = b.dataset.f;
+  $('#c-preset').value = 'custom';
+  go('calculator');
+  calc();
+}));
+
+function drawTrade() {
+  const cv = $('#trade'); if (!cv) return;
+  const ctx = cv.getContext('2d'), w = cv.width, h = cv.height;
+  const B = num('c-b') || 80, th = (num('c-th') || 37) * D2R;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0e18';
+  ctx.fillRect(0, 0, w, h);
+  const m = { l: 48, r: 14, t: 18, b: 36 };
+  const xs = x => m.l + x * (w - m.l - m.r);
+  const ys = y => m.t + (1 - y) * (h - m.t - m.b);
+  ctx.strokeStyle = '#1e2d42'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = ys(i / 4);
+    ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke();
+  }
+  ctx.fillStyle = '#8b9cb8'; ctx.font = '11px ' + MONO;
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) ctx.fillText((i * 25) + ' m', m.l - 6, ys(i / 4) + 3);
+  ctx.textAlign = 'center';
+  ctx.fillText('Bandwidth (MHz)', (m.l + w - m.r) / 2, h - 8);
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const bw = 10 + i * 1.4;
+    const rg = (C / (2 * bw * 1e6)) / Math.sin(th);
+    const x = (bw - 10) / 140;
+    const y = Math.min(1, rg / 100);
+    if (i === 0) ctx.moveTo(xs(x), ys(y)); else ctx.lineTo(xs(x), ys(y));
+  }
+  ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 2.2; ctx.stroke();
+  // current B marker
+  const curX = (B - 10) / 140;
+  const curRg = (C / (2 * B * 1e6)) / Math.sin(th);
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath(); ctx.arc(xs(curX), ys(Math.min(1, curRg / 100)), 4, 0, Math.PI * 2); ctx.fill();
+}
+
+/* ========== pulse simulator ========== */
+const WIN = {
+  rect: { k: 0.886, p: -13.3 },
+  hann: { k: 1.44, p: -31.5 },
+  hamming: { k: 1.30, p: -42.6 }
+};
+function compress(B, tau, win) {
+  const N = 2048, M = N;
+  const fs = Math.max(4 * B, 2e6);
+  const dt = 1 / fs;
+  const sr = new Float64Array(N), si = new Float64Array(N);
+  const nPulse = Math.min(N, Math.round(tau * fs));
+  for (let i = 0; i < nPulse; i++) {
+    const t = (i - nPulse / 2) * dt;
+    const phase = Math.PI * B / tau * t * t;
+    let a = 1;
+    if (win === 'hann') a = 0.5 * (1 - Math.cos(2 * Math.PI * i / (nPulse - 1)));
+    if (win === 'hamming') a = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (nPulse - 1));
+    sr[i] = a * Math.cos(phase);
+    si[i] = a * Math.sin(phase);
+  }
+  // matched filter (conjugate time-reversed)
+  const fr = new Float64Array(N), fi = new Float64Array(N);
+  for (let i = 0; i < nPulse; i++) {
+    fr[i] = sr[nPulse - 1 - i];
+    fi[i] = -si[nPulse - 1 - i];
+  }
+  // simple convolution via FFT-like (direct for clarity)
+  const outR = new Float64Array(N), outI = new Float64Array(N);
+  for (let n = 0; n < N; n++) {
+    let re = 0, im = 0;
+    for (let k = 0; k < nPulse; k++) {
+      const j = n - k;
+      if (j < 0 || j >= nPulse) continue;
+      re += sr[j] * fr[k] - si[j] * fi[k];
+      im += sr[j] * fi[k] + si[j] * fr[k];
+    }
+    outR[n] = re; outI[n] = im;
+  }
+  const half = Math.min(80, N / 2 - 1);
+  const amp = new Float64Array(2 * half + 1);
+  let pk = 0, mid = Math.floor(nPulse / 2);
+  for (let j = -half; j <= half; j++) {
+    const idx = mid + j;
+    const v = idx >= 0 && idx < N ? Math.hypot(outR[idx], outI[idx]) : 0;
+    amp[j + half] = v;
+    if (v > pk) pk = v;
+  }
+  for (let i = 0; i < amp.length; i++) amp[i] /= (pk || 1);
+  return { amp, half, fs };
+}
+function drawPulse() {
+  if (current !== 'simulator') return;
+  const B = num('sa-b') * 1e6, tau = num('sa-t') * 1e-6, win = $('#sa-w').value;
+  const { amp, half, fs } = compress(B, tau, win);
+  const dr = C / (2 * fs);
+  const rho0 = C / (2 * B);
+  // 3 dB width
+  let r = half; while (r < amp.length - 1 && amp[r] > 0.70711) r++;
+  let l = half; while (l > 0 && amp[l] > 0.70711) l--;
+  const w3 = (r - l) * dr;
+  // PSLR
+  let nr = half; while (nr < amp.length - 1 && amp[nr + 1] < amp[nr]) nr++;
+  let nl = half; while (nl > 0 && amp[nl - 1] < amp[nl]) nl--;
+  let side = 0;
+  for (let i = 0; i < amp.length; i++) if (i > nr || i < nl) side = Math.max(side, amp[i]);
+  const pslr = 20 * Math.log10(side || 1e-6);
+  const th = WIN[win];
+  $('#sa-out tbody').innerHTML =
+    `<tr><td>Time-bandwidth product</td><td class="num">${(B * tau).toFixed(0)}</td><td class="f">compression ratio</td></tr>` +
+    `<tr><td>Uncompressed pulse length</td><td class="num">${len(C * tau / 2)}</td><td class="f">c τ / 2</td></tr>` +
+    `<tr><td>3 dB resolution</td><td class="num">${len(w3)}</td><td class="f">~${len(th.k * rho0)} (${th.k} · c/2B)</td></tr>` +
+    `<tr><td>Peak sidelobe ratio</td><td class="num">${pslr.toFixed(1)} dB</td><td class="f">theory ~${th.p} dB</td></tr>`;
+
+  const cv = $('#cv-pulse'), ctx = cv.getContext('2d'), w = cv.width, h = cv.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#0a0e18'; ctx.fillRect(0, 0, w, h);
+  const m = { l: 46, r: 12, t: 14, b: 34 };
+  const cells = 12, range = cells * rho0;
+  const px = x => m.l + (x + range) / (2 * range) * (w - m.l - m.r);
+  const py = db => m.t + (-db) / 55 * (h - m.t - m.b);
+  ctx.strokeStyle = '#1e2d42'; ctx.lineWidth = 1;
+  for (let db = 0; db >= -50; db -= 10) {
+    const y = py(db);
+    ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(w - m.r, y); ctx.stroke();
+    ctx.fillStyle = '#8b9cb8'; ctx.font = '11px ' + MONO; ctx.textAlign = 'right';
+    ctx.fillText(String(db), m.l - 6, y + 3);
+  }
+  ctx.fillStyle = '#8b9cb8'; ctx.textAlign = 'center';
+  ctx.fillText('Range offset (resolution cells)', (m.l + w - m.r) / 2, h - 8);
+  // -3 dB line
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = '#f59e0b';
+  ctx.beginPath(); ctx.moveTo(m.l, py(-3)); ctx.lineTo(w - m.r, py(-3)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f59e0b'; ctx.textAlign = 'left'; ctx.fillText('-3 dB', m.l + 6, py(-3) - 6);
+  // curve
+  ctx.save();
+  ctx.beginPath(); ctx.rect(m.l, m.t, w - m.l - m.r, h - m.t - m.b); ctx.clip();
+  ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i < amp.length; i++) {
+    const x = (i - half) * dr;
+    if (Math.abs(x) > range) continue;
+    const db = Math.max(-55, 20 * Math.log10(amp[i] + 1e-9));
+    const X = px(x), Y = py(db);
+    if (started) ctx.lineTo(X, Y); else { ctx.moveTo(X, Y); started = true; }
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+bindOut('sa-b', 'sa-bo', v => v + ' MHz');
+bindOut('sa-t', 'sa-to', v => v + ' µs');
+['sa-b', 'sa-t', 'sa-w'].forEach(id => $('#' + id).addEventListener('input', () => schedule(drawPulse)));
+
+/* ========== terrain geometry ========== */
+function drawGeo() {
+  if (current !== 'geometry') return;
+  const cv = $('#cv-geo');
+  const thD = num('g-th'), H = num('g-h'), afD = num('g-af'), abD = num('g-ab');
+  const th = thD * D2R, af = afD * D2R, ab = abD * D2R;
+  const dxf = H / Math.tan(af), dxb = H / Math.tan(ab);
+  const st = Math.tan(th), sn = Math.sin(th), cs = Math.cos(th);
+  const shadowOn = abD > 90 - thD;
+  const P = 0.5 * (dxf + dxb + H * st), xc = P + dxf, xb = xc + dxb, xs = xc + H * st;
+  const tot = Math.max(xb, xs) + 0.35 * (dxf + dxb + H * st) + 1;
+  const w0 = Math.max(220, cv.clientWidth || 300);
+  let s = (w0 - 28) / tot;
+  s = Math.min(s, (320 - 70) / (1.7 * H));
+  const h1 = Math.max(190, Math.round(s * H * 1.7 + 60));
+  const hTot = h1 + 170;
+  cv.height = hTot; cv.width = Math.max(720, w0);
+  const ctx = cv.getContext('2d'), w = cv.width;
+  s = Math.min((w - 28) / tot, (320 - 70) / (1.7 * H));
+  const ox = 14 + ((w - 28) - tot * s) / 2, y0 = h1 - 22;
+  const px = x => ox + x * s, py = z => y0 - z * s;
+  const ink = css('--ink'), mut = css('--muted'), line = css('--line'), ac = css('--accent'), wm = css('--accent3');
+  ctx.clearRect(0, 0, w, hTot);
+  ctx.fillStyle = '#0a0e18'; ctx.fillRect(0, 0, w, hTot);
+  ctx.font = '11px ' + MONO; ctx.textBaseline = 'middle';
+  const ter = x => x < P ? 0 : x < xc ? (x - P) * Math.tan(af) : x < xb ? H - (x - xc) * Math.tan(ab) : 0;
+  if (shadowOn) {
+    ctx.fillStyle = ink; ctx.globalAlpha = 0.22;
+    ctx.beginPath(); ctx.moveTo(px(xc), py(H)); ctx.lineTo(px(xs), py(0)); ctx.lineTo(px(xb), py(0)); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // rays
+  const zTop = (y0 - 12) / s, nRay = Math.max(8, Math.round(w / 40));
+  const xStart = -zTop * st, step = Math.max(tot / 700, H / 60);
+  ctx.strokeStyle = ac; ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+  for (let i = 0; i <= nRay; i++) {
+    const x0 = xStart + i * (tot - xStart) / nRay;
+    let t = 0, x = x0, z = zTop;
+    for (let k = 0; k < 5000; k++) {
+      t += step; x = x0 + t * sn; z = zTop - t * cs;
+      if (z <= ter(x) || z < 0 || x > tot) break;
+    }
+    ctx.beginPath(); ctx.moveTo(px(x0), py(zTop)); ctx.lineTo(px(x), py(Math.max(z, 0))); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // terrain fill
+  ctx.fillStyle = line;
+  ctx.beginPath();
+  ctx.moveTo(px(0), py(0)); ctx.lineTo(px(P), py(0)); ctx.lineTo(px(xc), py(H));
+  ctx.lineTo(px(xb), py(0)); ctx.lineTo(px(tot), py(0));
+  ctx.lineTo(px(tot), py(0) + 12); ctx.lineTo(px(0), py(0) + 12); ctx.closePath(); ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = ink;
+  ctx.beginPath(); ctx.moveTo(px(0), py(0)); ctx.lineTo(px(P), py(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px(xb), py(0)); ctx.lineTo(px(tot), py(0)); ctx.stroke();
+  ctx.strokeStyle = wm; ctx.beginPath(); ctx.moveTo(px(P), py(0)); ctx.lineTo(px(xc), py(H)); ctx.stroke();
+  ctx.strokeStyle = ac;
+  if (shadowOn) ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(px(xc), py(H)); ctx.lineTo(px(xb), py(0)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = mut; ctx.textAlign = 'left';
+  ctx.fillText('rays arrive at incidence angle ' + thD + '° from the left', 14, 12);
+  if (shadowOn) { ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.fillText('shadow', px((xb + xs) / 2), py(0) - 8); }
+
+  // slant-range strip
+  const r = (x, z) => x * sn - z * cs;
+  const rP = r(P, 0), rC = r(xc, H), rB = r(xb, 0), rS = r(xs, 0), rEnd = r(tot, 0);
+  const rmin = Math.min(0, rC), rmax = rEnd, ml = 80, mr = 12;
+  const rx = v => ml + (v - rmin) / (rmax - rmin) * (w - ml - mr);
+  const top = h1 + 12;
+  ctx.fillStyle = mut; ctx.textAlign = 'left';
+  ctx.fillText('Slant-range image (near range left)', 14, top);
+  const rows = ['Ground', 'Front slope', 'Back slope', 'Ground far'];
+  const ry = i => top + 22 + i * 22;
+  const bar = (i, a, b, col, alpha, dashed) => {
+    const x0 = rx(Math.min(a, b)), x1 = rx(Math.max(a, b));
+    ctx.globalAlpha = alpha;
+    if (dashed) {
+      ctx.strokeStyle = col; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5;
+      ctx.strokeRect(x0, ry(i) - 6, Math.max(1, x1 - x0), 12); ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = col; ctx.fillRect(x0, ry(i) - 6, Math.max(1.5, x1 - x0), 12);
+    }
+    ctx.globalAlpha = 1;
+  };
+  rows.forEach((n, i) => { ctx.fillStyle = mut; ctx.textAlign = 'left'; ctx.fillText(n, 14, ry(i)); });
+  const layover = afD >= thD;
+  if (layover) {
+    ctx.fillStyle = wm; ctx.globalAlpha = 0.18;
+    const a = rx(Math.max(rC, 0)), b = rx(rP);
+    ctx.fillRect(a, ry(0) - 12, Math.max(1, b - a), ry(3) - ry(0) + 24); ctx.globalAlpha = 1;
+  }
+  bar(0, 0, rP, ink, 0.4);
+  bar(1, rP, rC, wm, 0.9);
+  bar(2, rC, rB, ac, 0.9, shadowOn);
+  if (shadowOn) { bar(3, rB, rS, ink, 0.85); bar(3, rS, rEnd, ink, 0.4); }
+  else bar(3, rB, rEnd, ink, 0.4);
+  if (layover) { ctx.fillStyle = wm; ctx.textAlign = 'left'; ctx.fillText('layover', rx(Math.max(rC, 0)) + 2, ry(3) + 16); }
+  if (shadowOn) { ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.fillText('no echo', rx(rB) + 2, ry(3) + 16); }
+
+  // summary table
+  const fac = 1 - Math.tan(af) / st, bk = 1 + Math.tan(ab) / st;
+  let fr, bt;
+  if (layover) fr = ['<span class="pill bad">Layover</span>', `Slope (${afD}°) steeper than incidence (${thD}°). Top maps closer than base.`];
+  else fr = [`<span class="pill ${fac < 0.25 ? 'warn' : 'ok'}">Foreshortened</span>`, `Appears ${(fac * 100).toFixed(0)}% of true length. Local incidence ${(thD - afD).toFixed(0)}°.`];
+  if (shadowOn) bt = ['<span class="pill bad">Shadow</span>', `Slope (${abD}°) exceeds 90°−θ = ${(90 - thD).toFixed(0)}°. ~${len(Math.max(0, H * st - dxb))} of ground hidden.`];
+  else bt = ['<span class="pill ok">Stretched</span>', `Appears ${(bk * 100).toFixed(0)}% of true length. Local incidence ${(thD + abD).toFixed(0)}°.`];
+  $('#g-out tbody').innerHTML =
+    `<tr><td>Front slope</td><td>${fr[0]}</td><td>${fr[1]}</td></tr>` +
+    `<tr><td>Back slope</td><td>${bt[0]}</td><td>${bt[1]}</td></tr>` +
+    `<tr><td>Hill base width</td><td class="num">${len(dxf + dxb)}</td><td class="f">front ${len(dxf)}, back ${len(dxb)}</td></tr>`;
+}
+bindOut('g-th', 'g-tho', v => v + '°');
+bindOut('g-h', 'g-ho', v => v + ' m');
+bindOut('g-af', 'g-afo', v => v + '°');
+bindOut('g-ab', 'g-abo', v => v + '°');
+['g-th', 'g-h', 'g-af', 'g-ab'].forEach(id => $('#' + id).addEventListener('input', () => schedule(drawGeo)));
+
+/* ========== NISAR coverage ========== */
+function nisarCalc() {
+  const alt = num('n-alt') * 1e3, sw = num('n-sw'), orb = num('n-orb'), days = num('n-days');
+  const tb = $('#n-out tbody');
+  if (![alt, sw, orb, days].every(x => isFinite(x) && x > 0)) {
+    tb.innerHTML = '<tr><td colspan="2">Enter positive values.</td></tr>';
+    return;
+  }
+  const a = RE + alt, T = 2 * Math.PI * Math.sqrt(a * a * a / MU), perDay = 86400 / T;
+  const circ = 2 * Math.PI * RE / 1000, sp = circ / orb, diff = sw - sp;
+  const verdict = diff >= 0
+    ? `<span class="pill ok">Full coverage · ${(diff / sw * 100).toFixed(1)}% overlap</span>`
+    : `<span class="pill bad">Gaps of ${(-diff).toFixed(1)} km between tracks</span>`;
+  tb.innerHTML =
+    `<tr><td>Orbital period</td><td class="num">${(T / 60).toFixed(1)} min</td></tr>` +
+    `<tr><td>Orbits per day</td><td class="num">${perDay.toFixed(2)}</td></tr>` +
+    `<tr><td>Orbits in one cycle</td><td class="num">${(perDay * days).toFixed(0)}</td></tr>` +
+    `<tr><td>Equatorial track spacing</td><td class="num">${sp.toFixed(1)} km</td></tr>` +
+    `<tr><td>Swath − spacing</td><td class="num">${diff.toFixed(1)} km</td></tr>` +
+    `<tr><td>Result</td><td>${verdict}</td></tr>`;
+}
+['n-alt', 'n-sw', 'n-orb', 'n-days'].forEach(id => $('#' + id).addEventListener('input', nisarCalc));
+
+/* ========== image lab ========== */
+function drawSAR() {
+  if (current !== 'lab') return;
+  const cv = $('#sarimg'), ctx = cv.getContext('2d'), w = cv.width, h = cv.height;
+  const scene = $('#scene').value, mode = $('#composite').value, looks = +$('#looks').value;
+  $('#looksOut').textContent = looks + (looks === 1 ? ' look' : ' looks');
+  let seed = 12345;
+  function rand() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+  const im = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const nx = x / w, ny = y / h;
+      let water = false, road = false;
+      const urban = scene === 'urban' && ((Math.floor(x / 54) % 2 === 0 && Math.floor(y / 48) % 2 === 0));
+      if (scene === 'land') water = Math.abs(nx - (0.27 + 0.08 * Math.sin(ny * 8))) < 0.035;
+      if (scene === 'coast') water = nx > 0.62 + 0.06 * Math.sin(ny * 9);
+      if (scene === 'forest' || scene === 'urban') water = false;
+      road = Math.abs(ny - (0.64 + 0.04 * Math.sin(nx * 11))) < 0.018;
+      let base = water ? 0.04 : road ? 0.18 : urban ? 0.85 : scene === 'forest' ? 0.62 : scene === 'urban' ? 0.72 : scene === 'coast' ? 0.48 : 0.48;
+      let hh = base * (0.75 + rand() * 0.7);
+      let hv = (water ? 0.02 : base * (scene === 'forest' ? 0.75 : 0.32)) * (0.75 + rand() * 0.7);
+      let vv = (water ? 0.025 : base * (urban ? 0.8 : 0.62)) * (0.75 + rand() * 0.7);
+      let noise = 0;
+      for (let k = 0; k < looks; k++) noise += rand();
+      noise = noise / looks * 1.3 + 0.35;
+      hh *= noise; hv *= noise; vv *= noise;
+      let r, g, b;
+      if (mode === 'hh') { r = g = b = hh * 240; }
+      else if (mode === 'hv') { r = g = b = hv * 300; }
+      else if (mode === 'vv') { r = g = b = vv * 240; }
+      else if (mode === 'natural') { r = hh * 240; g = vv * 230; b = hv * 330; }
+      else { r = hh * 255; g = hv * 300; b = vv * 260; }
+      const i = (y * w + x) * 4;
+      im.data[i] = Math.min(255, r);
+      im.data[i + 1] = Math.min(255, g);
+      im.data[i + 2] = Math.min(255, b);
+      im.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(im, 0, 0);
+  $('#sceneCaption').textContent = `Synthetic ${scene} scene · ${mode === 'fcc' ? 'HH/HV/VV false-colour' : mode.toUpperCase() + ' display'} · ${looks} look(s).`;
+  $('#legend').textContent = mode === 'fcc' ? 'Red: HH · Green: HV · Blue: VV'
+    : mode === 'natural' ? 'Red: HH · Green: VV · Blue: HV'
+    : mode.toUpperCase() + ' intensity channel';
+}
+['scene', 'composite', 'looks'].forEach(id => $('#' + id).addEventListener('input', drawSAR));
+$('#regen').onclick = drawSAR;
+$('#download').onclick = () => {
+  const a = document.createElement('a');
+  a.download = 'sar-intelligence-synthetic.png';
+  a.href = $('#sarimg').toDataURL('image/png');
+  a.click();
+};
+
+/* ========== products ========== */
+const products = [
+  ['RSLC', 1, 'n/a', 'No', 'Single-look complex in zero-Doppler geometry. Complex signal per polarisation with LUTs to β⁰, σ⁰, γ⁰.'],
+  ['RIFG', 1, '30 m', 'No', 'Wrapped interferogram and coherence magnitude. Ellipsoid + topography flattened, multi-looked.'],
+  ['RUNW', 1, '80 m', 'No', 'Unwrapped interferogram, coherence, connected components, ionospheric phase screen + uncertainty.'],
+  ['ROFF', 1, '90 m', 'No', 'Pixel offsets (along-track & slant-range) with variances, correlation peak and SNR. Unfiltered.'],
+  ['GSLC', 2, '5–40 m', 'Yes', 'RSLC resampled to a map grid. Includes water and shadow-layover mask; topographic phase flattened.'],
+  ['GCOV', 2, '10 / 20 / 80 m', 'Yes', 'Polarimetric covariance terms, radiometrically terrain-corrected γ⁰ power, mask and number of looks.'],
+  ['GOFF', 2, '80 m', 'Yes', 'Geocoded pixel offsets (same layers as ROFF). Also unfiltered.'],
+  ['GUNW', 2, '80 m', 'Yes', 'Geocoded unwrapped interferogram, coherence, connected components and ionospheric phase screen.'],
+  ['SME2', 3, '200 m', 'Yes', 'Soil moisture from GCOV time series (disaggregation + physical inversion). Provisional.']
+];
+function renderProducts() {
+  const q = $('#productSearch').value.toLowerCase(), lv = $('#levelFilter').value;
+  const rows = products.filter(p => (lv === 'all' || p[1] === +lv) && p.join(' ').toLowerCase().includes(q));
+  $('#productRows').innerHTML = rows.map(p =>
+    `<tr><td><b>${p[0]}</b></td><td>L${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td><td>${p[4]}</td></tr>`
+  ).join('') || '<tr><td colspan="5">No matching products.</td></tr>';
+  $('#productCount').textContent = `Showing ${rows.length} of ${products.length} products.`;
+}
+$('#productSearch').oninput = renderProducts;
+$('#levelFilter').onchange = renderProducts;
+
+const goals = [
+  ['Ground movement', 'GUNW · RUNW · RIFG', 'L-band mainly', 'Phase is distorted by the ionosphere — use the phase-screen layer and its uncertainty. Vegetation, water and snow reduce coherence.'],
+  ['Floods and open water', 'GCOV · GSLC', 'L and S', 'Smooth water is a low-signal surface where banding and RFI show most. GSLC carries a water / shadow-layover mask.'],
+  ['Forest biomass', 'GCOV', 'L-band', 'L-band penetrates vegetation. Validated collections began November 2026 — check product version.'],
+  ['Crops and farmland', 'GCOV', 'S-band + L', 'S-band responds to finer vegetation. Current S-band baseline v1.4.0 (CRID P00500), centred on India.'],
+  ['Soil moisture', 'SME2', 'L and S', 'Provisional only. Needs long validated GCOV time series. Filter by CRID (P05036 / P05023).'],
+  ['Glacier / ice motion', 'GOFF · ROFF', 'L-band mainly', 'Offset layers are distributed without filtering — apply your own outlier rejection before interpretation.']
+];
+$('#goalCards').innerHTML = goals.map(g =>
+  `<article class="card"><span class="pill info">${g[1]}</span><h3 style="margin-top:8px">${g[0]}</h3>
+   <p class="note"><b>Band:</b> ${g[2]}</p><p class="note">${g[3]}</p></article>`
+).join('');
+
+/* ========== challenges ========== */
+const problems = [
+  ['Reflector thermal issue', 'Stowed reflector components ran hotter than predicted in thermal-vacuum testing. Engineers added reflective tape and other precautions; hardware was fully checked out before launch.', 'Resolved'],
+  ['Launch timing & thermal cycles', 'Sun/shadow transitions in certain windows could create temperature swings during boom/reflector deployment. Launch planning avoided the constrained period.', 'Resolved'],
+  ['Wide swath vs resolution', 'Conventional SAR trades swath width against resolution. SweepSAR digitises every receive element and forms beams digitally, delivering ~242 km at full resolution.', 'Design approach'],
+  ['Radiometric banding', 'Residual banding remains visible over oceans, deserts and other low-SNR homogeneous surfaces while calibration matures.', 'Ongoing'],
+  ['Radio-frequency interference', 'RFI can create bright blobs or decorrelation. Mitigation is applied to every scene, but residuals and occasional over-filtering still require quality checks.', 'Ongoing'],
+  ['Ionospheric phase distortion', 'The ionosphere adds phase error especially at L-band. Products include an ionospheric phase-screen layer and its uncertainty.', 'Ongoing'],
+  ['Soil moisture validation', 'SME2 needs long validated GCOV time series and remains provisional in the supplied guide.', 'Ongoing'],
+  ['Hardware integration across agencies', 'NASA supplied L-band radar + 12 m reflector; ISRO supplied S-band radar, spacecraft and launch. Reflector repairs required shipping between California and Bengaluru.', 'Resolved']
+];
+$('#problemCards').innerHTML = problems.map(p =>
+  `<div class="acc"><button type="button" aria-expanded="false">${p[0]} <span>＋</span></button>
+   <div class="body"><p>${p[1]}</p><span class="pill ${p[2] === 'Resolved' ? 'ok' : p[2] === 'Ongoing' ? 'warn' : 'info'}">${p[2]}</span></div></div>`
+).join('');
+$$('#problemCards .acc > button').forEach(b => b.onclick = () => {
+  const a = b.parentElement;
+  a.classList.toggle('open');
+  b.setAttribute('aria-expanded', a.classList.contains('open'));
+  b.lastElementChild.textContent = a.classList.contains('open') ? '−' : '＋';
+});
+
+/* ========== glossary ========== */
+const GLOSS = [
+  ['Azimuth', 'Direction parallel to the flight track of the radar platform.'],
+  ['Bandwidth (B)', 'Frequency span of the transmitted pulse; sets slant-range resolution ≈ c/2B.'],
+  ['Coherence', 'Complex correlation magnitude between two SAR images; indicates phase stability.'],
+  ['Doppler bandwidth', 'Range of Doppler frequencies observed from a target while it is in the beam; ≈ 2v/L.'],
+  ['False-colour composite', 'Display that maps different polarisations or decomposition channels to RGB for visual interpretation.'],
+  ['GCOV', 'Geocoded covariance product — polarimetric power and cross-terms on a map grid.'],
+  ['GSLC', 'Geocoded single-look complex; RSLC resampled to geographic coordinates.'],
+  ['GUNW', 'Geocoded unwrapped interferogram product including ionospheric phase screen.'],
+  ['Incidence angle', 'Angle between the radar look vector and the local vertical (or surface normal).'],
+  ['Interferometry (InSAR)', 'Use of phase difference between two acquisitions to measure topography or displacement.'],
+  ['Ionospheric phase screen', 'Estimate of phase delay caused by the ionosphere; supplied as a product layer for L-band.'],
+  ['Layover', 'Geometric distortion when a steep front slope maps the top of a feature closer in range than its base.'],
+  ['Multilooking', 'Spatial averaging of independent looks to reduce speckle at the expense of resolution.'],
+  ['PRF', 'Pulse repetition frequency — how many pulses are transmitted per second.'],
+  ['Polarimetry', 'Measurement and analysis of the full scattering matrix (HH, HV, VH, VV).'],
+  ['Range (slant)', 'Distance along the radar line of sight from antenna to target.'],
+  ['RFI', 'Radio-frequency interference from external transmitters that can corrupt SAR scenes.'],
+  ['RSLC', 'Radar-geometry single-look complex product (Level 1).'],
+  ['Shadow', 'Region on the far side of a slope that receives no radar illumination.'],
+  ['Speckle', 'Granular noise arising from coherent interference of many scatterers within a resolution cell.'],
+  ['SweepSAR', 'Digital beamforming technique used by NISAR to achieve wide swath at high resolution.'],
+  ['Synthetic aperture', 'Virtual antenna formed by coherent combination of echoes collected along the flight path.'],
+  ['β⁰ / σ⁰ / γ⁰', 'Radar brightness, radar cross-section and terrain-flattened gamma-naught backscatter coefficients.']
+];
+function renderGloss() {
+  const q = ($('#gl-q')?.value || '').toLowerCase();
+  const rows = GLOSS.filter(g => !q || (g[0] + ' ' + g[1]).toLowerCase().includes(q));
+  $('#gl-list').innerHTML = rows.length
+    ? rows.map(g => `<div class="gl"><dt>${g[0]}</dt><dd>${g[1]}</dd></div>`).join('')
+    : '<p class="note">No term matches.</p>';
+}
+$('#gl-q')?.addEventListener('input', renderGloss);
+renderGloss();
+
+/* ========== quiz ========== */
+const QUIZ = [
+  { q: 'For a stripmap SAR, what sets the best achievable azimuth resolution?', o: ['The transmitted bandwidth', 'About half the physical antenna length', 'The orbit altitude', 'The radar wavelength alone'], a: 1, e: 'Azimuth resolution is ≈ L/2 and does not depend on range or wavelength. A shorter antenna has a wider beam and a longer synthetic aperture.' },
+  { q: 'What mainly determines slant-range resolution?', o: ['Pulse bandwidth', 'Antenna height', 'Platform speed', 'Orbit inclination'], a: 0, e: 'Range resolution is c/2B. Ground-range resolution divides that by sin(incidence).' },
+  { q: 'Why is a real-aperture radar unattractive from orbit?', o: ['It cannot transmit pulses', 'Its azimuth resolution of Rλ/L reaches kilometres at orbital range', 'It does not need Doppler processing', 'It only works at night'], a: 1, e: 'The beam footprint grows with range. The synthetic aperture removes that dependence.' },
+  { q: 'Which NISAR radar did ISRO provide?', o: ['L-band', 'S-band', 'X-band', 'C-band'], a: 1, e: 'NASA provided the L-band radar and the 12 m reflector; ISRO provided the S-band radar, spacecraft and launch vehicle.' },
+  { q: 'What technique gives NISAR its ~242 km L-band swath?', o: ['SweepSAR', 'Spotlight mode', 'Bistatic sensing', 'Polarimetric calibration'], a: 0, e: 'SweepSAR transmits a wide beam and forms narrow receive beams that follow the echo across the swath.' },
+  { q: 'How often does NISAR repeat its ground track?', o: ['Every 3 days', 'Every 12 days', 'Every 35 days', 'Every 46 days'], a: 1, e: 'It revisits the same spot twice every 12 days (ascending and descending).' },
+  { q: 'A front slope causes layover when…', o: ['its angle exceeds the incidence angle', 'it is covered by snow', 'the wavelength exceeds 10 cm', 'the PRF is too high'], a: 0, e: 'When the slope is steeper than the incidence angle, the top of the slope is nearer to the radar than its base.' },
+  { q: 'One interferometric fringe corresponds to how much line-of-sight motion?', o: ['One wavelength', 'Half a wavelength', 'A quarter wavelength', 'Two wavelengths'], a: 1, e: 'The signal travels out and back, so half a wavelength of surface motion changes phase by one full cycle.' },
+  { q: 'Why does L-band suit forest and biomass studies?', o: ['Its long wavelength penetrates the canopy', 'It has the finest range resolution', 'It is unaffected by polarisation', 'It needs no antenna'], a: 0, e: 'Longer wavelengths pass through leaves and small branches and interact with trunks and large branches.' },
+  { q: 'What is the approximate altitude of NISAR’s orbit?', o: ['350 km', '747 km', '1 200 km', '36 000 km'], a: 1, e: 'NISAR flies a sun-synchronous orbit at about 747 km, inclined at 98.4°.' }
+];
+let qi = 0, qs = 0, qa = false;
+function renderQuiz() {
+  const box = $('#quiz-box');
+  if (qi >= QUIZ.length) {
+    box.innerHTML = `<h3>Finished</h3>
+      <p style="font-size:1.45rem;margin:8px 0 12px">You scored <strong>${qs} of ${QUIZ.length}</strong>.</p>
+      <p class="note">${qs >= 8 ? 'Strong grasp of the material.' : qs >= 5 ? 'Good start — review Learn and NISAR tabs for the rest.' : 'Worth another look at the Learn tab.'}</p>
+      <button class="btn primary" id="q-restart" type="button">Restart</button>`;
+    $('#q-restart').onclick = () => { qi = 0; qs = 0; qa = false; renderQuiz(); };
+    return;
+  }
+  const q = QUIZ[qi];
+  qa = false;
+  box.innerHTML = `<div class="bar"><i style="width:${qi / QUIZ.length * 100}%"></i></div>
+    <p class="note">Question ${qi + 1} of ${QUIZ.length} · Score ${qs}</p>
+    <h3 style="font-size:1.08rem;margin:6px 0 12px">${q.q}</h3>
+    <div id="q-opts">${q.o.map((t, i) => `<button class="opt" type="button" data-i="${i}">${t}</button>`).join('')}</div>
+    <div id="q-fb"></div>`;
+  $$('#q-opts .opt').forEach(b => b.addEventListener('click', () => {
+    if (qa) return;
+    qa = true;
+    const i = +b.dataset.i, ok = i === q.a;
+    if (ok) qs++;
+    $$('#q-opts .opt').forEach((x, j) => {
+      x.disabled = true;
+      if (j === q.a) x.classList.add('right');
+      else if (j === i) x.classList.add('wrong');
+    });
+    $('#q-fb').innerHTML = `<p style="margin-top:10px"><span class="pill ${ok ? 'ok' : 'bad'}">${ok ? 'Correct' : 'Not quite'}</span> ${q.e}</p>
+      <button class="btn primary" id="q-next" type="button">${qi === QUIZ.length - 1 ? 'See score' : 'Next question'}</button>`;
+    $('#q-next').onclick = () => { qi++; renderQuiz(); };
+  }));
+}
+renderQuiz();
+
+/* ========== global search ========== */
+function buildIdx() {
+  const a = [];
+  products.forEach(p => a.push({ k: 'Product', t: p[0], s: p[4].slice(0, 70) + '…', h: 'products', hay: (p[0] + ' ' + p[4]).toLowerCase() }));
+  goals.forEach(g => a.push({ k: 'Goal', t: g[0], s: g[1], h: 'products', hay: (g[0] + ' ' + g[3]).toLowerCase() }));
+  problems.forEach(p => a.push({ k: 'Challenge', t: p[0], s: p[1].slice(0, 70) + '…', h: 'problems', hay: (p[0] + ' ' + p[1]).toLowerCase() }));
+  GLOSS.forEach(g => a.push({ k: 'Glossary', t: g[0], s: g[1].slice(0, 70) + '…', h: 'learn', hay: (g[0] + ' ' + g[1]).toLowerCase() }));
+  QUIZ.forEach(q => a.push({ k: 'Quiz', t: q.q.slice(0, 50) + '…', s: 'Knowledge check', h: 'quiz', hay: q.q.toLowerCase() }));
+  a.push({ k: 'Section', t: 'Mission calculator', s: 'Resolution, PRF, aperture', h: 'calculator', hay: 'calculator resolution aperture prf wavelength' });
+  a.push({ k: 'Section', t: 'Pulse compression', s: 'Bandwidth & windowing', h: 'simulator', hay: 'pulse compression chirp sidelobe bandwidth' });
+  a.push({ k: 'Section', t: 'Terrain geometry', s: 'Layover shadow foreshortening', h: 'geometry', hay: 'layover shadow foreshortening terrain slope' });
+  a.push({ k: 'Section', t: 'Image lab', s: 'Synthetic SAR scenes', h: 'lab', hay: 'image lab false colour multilook polarisation' });
+  a.push({ k: 'Section', t: 'NISAR guide', s: 'Dual-band mission & timeline', h: 'nisar', hay: 'nisar sweep sar l-band s-band timeline reflector' });
+  a.push({ k: 'Section', t: 'Sources & references', s: 'Official NASA JPL ASF ISRO links', h: 'sources', hay: 'sources references nasa jpl asf daac earthdata bhoonidhi isro documentation known issues' });
+  a.push({ k: 'Source', t: 'ASF DAAC availability', s: 'NISAR data availability overview', h: 'sources', hay: 'asf daac availability provisional known issues' });
+  a.push({ k: 'Source', t: 'NASA Earthdata L-band release', s: 'Public L-band data announcement', h: 'sources', hay: 'earthdata l-band publicly available release' });
+  a.push({ k: 'Source', t: 'Bhoonidhi', s: 'ISRO S-band distribution', h: 'sources', hay: 'bhoonidhi nrsc isro s-band download' });
+  return a;
+}
+function initSearch() {
+  const inp = $('#gsearch'), box = $('#gres');
+  let hits = [];
+  const goHit = it => { box.hidden = true; inp.value = ''; go(it.h); };
+  const show = () => {
+    const q = inp.value.trim().toLowerCase();
+    if (q.length < 2) { box.hidden = true; return; }
+    hits = buildIdx().filter(it => it.hay.includes(q)).slice(0, 8);
+    box.innerHTML = hits.length
+      ? hits.map((it, i) => `<button type="button" data-i="${i}"><b>${it.t}</b><small>${it.k} · ${it.s}</small></button>`).join('')
+      : `<div style="padding:10px 12px;color:var(--muted)">Nothing found.</div>`;
+    box.hidden = false;
+    box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => goHit(hits[+b.dataset.i])));
+  };
+  inp.addEventListener('input', show);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && hits[0] && !box.hidden) { e.preventDefault(); goHit(hits[0]); }
+    if (e.key === 'Escape') box.hidden = true;
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) box.hidden = true; });
+}
+initSearch();
+
+/* ========== start ========== */
+calc();
+renderProducts();
+nisarCalc();
+if (location.hash && TABS.some(t => t[0] === location.hash.slice(1))) go(location.hash.slice(1));
+else go('overview');
+</script>
+</body>
+</html>
