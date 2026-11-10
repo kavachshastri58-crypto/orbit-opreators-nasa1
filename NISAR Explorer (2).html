@@ -1,0 +1,1059 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>NISAR Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: sticky tab bar over a single-column reading width, with a "Lab" tab of interactive SAR tools. Dark-first (radar night), full light theme. */
+:root {
+  --bg: #070b14; --surface: #0d1422; --surface2: #121c30; --line: #1c2b47;
+  --fg: #e6edf7; --muted: #9aaac2;
+  --accent: #5aa9ff; --accent-ink: #04122a; --teal: #3dd6c0; --amber: #f2b84b; --bad: #ff7a7a; --good: #4cd98a;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fb; --surface: #ffffff; --surface2: #eaf0f9; --line: #d3dcec;
+    --fg: #0e1a2e; --muted: #50617c;
+    --accent: #1456c8; --accent-ink: #ffffff; --teal: #0a7d78; --amber: #9a6100; --bad: #b42323; --good: #12794a;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f6fb; --surface: #ffffff; --surface2: #eaf0f9; --line: #d3dcec;
+  --fg: #0e1a2e; --muted: #50617c;
+  --accent: #1456c8; --accent-ink: #ffffff; --teal: #0a7d78; --amber: #9a6100; --bad: #b42323; --good: #12794a;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 8px 0 6px; }
+h3 { font-size: 1.1rem; margin: 0 0 8px; }
+p { margin: 0 0 12px; max-width: 68ch; color: var(--fg); }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+.top { padding-block: 28px 18px; display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+.top h1 { font-size: clamp(2rem, 6vw, 3.2rem); letter-spacing: .02em; }
+.top h1 span { color: var(--accent); }
+.top p { margin: 6px 0 0; color: var(--muted); }
+.theme-btn { background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; font: 500 13px var(--f-mono); cursor: pointer; }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.tabs .row { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; padding-block: 8px; }
+nav.tabs a { flex: none; text-decoration: none; color: var(--muted); padding: 8px 14px; border-radius: 6px; font: 500 14px var(--f-body); }
+nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+nav.tabs a:hover { color: var(--fg); }
+nav.tabs a[aria-current="page"]:hover { color: var(--accent-ink); }
+
+main { padding-block: 24px 48px; }
+section.panel[hidden] { display: none !important; }
+.panel > .lead { color: var(--muted); max-width: 68ch; margin-bottom: 20px; }
+
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; margin-bottom: 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.grid2 > .box { margin-bottom: 0; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: var(--surface2); white-space: nowrap; }
+td:first-child { font-weight: 600; }
+.src { font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface2); padding: 12px 14px; border-radius: 0 6px 6px 0; margin: 14px 0 0; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0 22px; }
+.stat { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 14px; }
+.stat b { display: block; font: 700 clamp(1.6rem, 4vw, 2.2rem) var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+
+/* chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.chip { background: var(--surface2); color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font: 500 13px var(--f-body); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.tag { display: inline-block; font: 500 12px var(--f-mono); padding: 2px 8px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--line); margin: 2px 4px 2px 0; }
+.tag.L { color: var(--accent); } .tag.S { color: var(--teal); } .tag.C { color: var(--amber); }
+
+/* accordion */
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px; }
+summary { cursor: pointer; padding: 14px 16px; font: 600 1rem var(--f-display); list-style: none; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font: 500 20px var(--f-mono); color: var(--accent); }
+details[open] > summary::after { content: "\2212"; }
+.dbody { padding: 0 16px 16px; }
+.dbody ul { margin: 6px 0 10px 20px; padding: 0; }
+.dbody li { margin-bottom: 6px; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.links a { font: 500 12px var(--f-mono); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; text-decoration: none; }
+
+/* forms */
+label { display: block; font: 500 12px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+select, input[type="text"] { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 11px 12px; font: 400 15px var(--f-body); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 6px; padding: 11px 18px; font: 600 14px var(--f-body); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+.row2 { display: flex; gap: 10px; flex-wrap: wrap; }
+.row2 > .grow { flex: 1 1 240px; min-width: 0; }
+
+/* band chart */
+.bars { display: grid; gap: 10px; margin-top: 8px; }
+.bar { display: grid; grid-template-columns: 110px 1fr 64px; gap: 10px; align-items: center; font-size: 14px; }
+.bar i { display: block; height: 14px; border-radius: 3px; }
+.bar .num { font: 500 13px var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .bar { grid-template-columns: 84px 1fr 56px; } }
+.waves { width: 100%; height: auto; display: block; }
+
+/* insar */
+.fr { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 12px; margin-top: 12px; }
+.fr figure { margin: 0; text-align: center; }
+.fr canvas { width: 100%; max-width: 240px; aspect-ratio: 1; border-radius: 6px; border: 1px solid var(--line); background: var(--surface2); }
+.fr figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.fr figcaption b { color: var(--fg); font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.readout { font: 500 28px var(--f-display); color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* finder + quiz */
+.result { margin-top: 14px; display: grid; gap: 10px; }
+.result dl { margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 14px; }
+.result dt { font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.result dd { margin: 0; min-width: 0; }
+.q { margin-bottom: 18px; }
+.q p { font-weight: 600; margin-bottom: 8px; }
+.opts { display: grid; gap: 8px; }
+.opt { text-align: left; background: var(--surface2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font: 400 14px var(--f-body); cursor: pointer; }
+.opt.right { border-color: var(--good); } .opt.wrong { border-color: var(--bad); }
+.why { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.score { font: 700 1.4rem var(--f-display); color: var(--accent); }
+
+/* search */
+.res { border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: var(--surface); }
+.res h3 { font-size: 1rem; margin-bottom: 4px; }
+.res p { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+.note { font-size: 14px; color: var(--muted); }
+.err { color: var(--bad); font-size: 14px; }
+.copy { font: 500 12px var(--f-mono); background: transparent; color: var(--accent); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; margin-left: 8px; }
+
+/* hero art + gallery */
+.heroart { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0 0 20px; background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%); position: relative; }
+.heroart svg { display: block; width: 100%; height: auto; }
+.heroart .cap { position: absolute; left: 14px; bottom: 10px; font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.sv-earth { fill: var(--surface2); stroke: var(--accent); stroke-width: 1.5; }
+.sv-body { fill: var(--fg); } .sv-panel { fill: var(--accent); opacity: .85; } .sv-dish { fill: none; stroke: var(--amber); stroke-width: 2.5; }
+.sv-beam { fill: var(--accent); opacity: .18; } .sv-beam2 { fill: var(--teal); opacity: .22; }
+.sv-line { stroke: var(--accent); stroke-width: 1; fill: none; opacity: .6; }
+.sv-lbl { font: 500 12px var(--f-mono); fill: var(--muted); }
+.sv-star { fill: var(--muted); opacity: .5; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 12px 0; }
+.fact { background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.fact b { display: block; font: 700 1.25rem var(--f-display); color: var(--fg); }
+.fact span { font-size: 12px; color: var(--muted); }
+.tl { list-style: none; margin: 8px 0 0; padding: 0 0 0 18px; border-left: 2px solid var(--line); }
+.tl li { position: relative; margin: 0 0 16px; padding-left: 12px; }
+.tl li::before { content: ""; position: absolute; left: -26px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.tl time { font: 500 12px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); display: block; }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; }
+.shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); min-width: 0; }
+.shot .head { padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--surface2); }
+.shot .head h3 { margin: 0 0 2px; }
+.shot .body { padding: 14px 16px; }
+.shot .body p { font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 10px 0 0; font-size: 13px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--line); }
+canvas.scene { width: 100%; max-width: 100%; height: auto; aspect-ratio: 8 / 5; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.welcome { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(4, 8, 16, .78); padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.welcome[hidden] { display: none !important; }
+.wcard { width: 100%; max-width: 460px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 14px; padding: 32px 28px 28px; text-align: center; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
+.wcard svg { width: 72px; height: 72px; margin-bottom: 14px; }
+.wcard .ring { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .6; }
+.wcard .dot { fill: var(--amber); } .wcard .core { fill: var(--accent); }
+.wcard h2 { font-size: clamp(1.4rem, 5vw, 1.8rem); margin: 0 0 10px; }
+.wcard p { margin: 0 auto 22px; color: var(--muted); }
+.wcard .btn { width: 100%; padding: 14px 18px; font-size: 16px; }
+.launch { position: fixed; inset: 0; z-index: 110; background: var(--bg); transition: opacity .5s ease; cursor: pointer; }
+.launch[hidden] { display: none !important; }
+.launch.out { opacity: 0; pointer-events: none; }
+.launch canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ltxt { position: absolute; left: 0; right: 0; bottom: max(14%, env(safe-area-inset-bottom, 0px)); text-align: center; font: 500 13px var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg); padding-inline: 16px; }
+.lbar { width: min(220px, 70vw); height: 3px; margin: 12px auto 0; background: var(--line); border-radius: 2px; overflow: hidden; }
+.lbar i { display: block; height: 100%; width: 0; background: var(--accent); }
+.ping { position: fixed; width: 90px; height: 90px; margin: -45px 0 0 -45px; border: 2px solid var(--accent); border-radius: 50%; pointer-events: none; z-index: 90; animation: ping .8s ease-out forwards; }
+@keyframes ping { from { transform: scale(.15); opacity: .9; } to { transform: scale(1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ping { display: none; } }
+.shot canvas.scene { border: 0; border-radius: 0; margin: 0; }
+.btnlink { display: inline-block; background: var(--accent); color: var(--accent-ink); text-decoration: none; border-radius: 6px; padding: 9px 16px; font: 600 14px var(--f-body); }
+footer { border-top: 1px solid var(--line); padding-block: 22px 32px; color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">NASA-ISRO Synthetic Aperture Radar</div>
+      <h1>NISAR <span>Explorer</span></h1>
+      <p>Earth observation, SAR data, challenges and solutions, with interactive tools.</p>
+    </div>
+    <button class="theme-btn" id="theme" type="button" aria-label="Switch colour theme">Theme: auto</button>
+  </header>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap row" id="tabs">
+    <a href="#overview">Overview</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#data">NISAR Data</a>
+    <a href="#sar">SAR Data</a>
+    <a href="#lab">Lab</a>
+    <a href="#problems">Problems</a>
+    <a href="#solutions">Solutions</a>
+    <a href="#search">Data Search</a>
+    <a href="#sources">Sources</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- OVERVIEW -->
+<section class="panel" id="overview">
+  <div class="eyebrow">Mission</div>
+  <h2>What is NISAR?</h2>
+  <p class="lead muted">A joint Earth-observation satellite mission from NASA and the Indian Space Research Organisation (ISRO).</p>
+
+  <figure class="heroart" style="margin-inline:0">
+    <svg viewBox="0 0 800 300" role="img" aria-label="Illustration of the NISAR satellite with its 12 metre reflector looking sideways at a wide radar swath on Earth">
+      <circle class="sv-star" cx="60" cy="40" r="1.6"/><circle class="sv-star" cx="150" cy="90" r="1.2"/><circle class="sv-star" cx="230" cy="30" r="1.8"/><circle class="sv-star" cx="610" cy="50" r="1.4"/><circle class="sv-star" cx="720" cy="100" r="1.8"/><circle class="sv-star" cx="680" cy="28" r="1.2"/><circle class="sv-star" cx="90" cy="140" r="1.2"/>
+      <path class="sv-earth" d="M0 300 Q400 120 800 300 Z"/>
+      <path class="sv-line" d="M40 262 Q400 138 760 262" stroke-dasharray="4 6"/>
+      <polygon class="sv-beam" points="396,84 238,226 330,213"/>
+      <polygon class="sv-beam2" points="396,84 330,213 372,210"/>
+      <line class="sv-line" x1="396" y1="84" x2="238" y2="226"/><line class="sv-line" x1="396" y1="84" x2="372" y2="210"/>
+      <rect class="sv-panel" x="318" y="52" width="58" height="14" rx="2"/><rect class="sv-panel" x="424" y="52" width="58" height="14" rx="2"/>
+      <rect class="sv-body" x="378" y="48" width="46" height="30" rx="3"/>
+      <line stroke="var(--amber)" stroke-width="2" x1="424" y1="56" x2="520" y2="34"/>
+      <ellipse class="sv-dish" cx="540" cy="26" rx="38" ry="16" transform="rotate(-18 540 26)"/>
+      <text class="sv-lbl" x="574" y="30">12 m reflector</text>
+      <text class="sv-lbl" x="150" y="258">Swath &gt; 240 km</text>
+      <text class="sv-lbl" x="300" y="100" text-anchor="end">L-band 24 cm + S-band 9.4 cm</text>
+      <text class="sv-lbl" x="560" y="250">Looks to one side of its track</text>
+    </svg>
+    <figcaption class="cap">Illustration, not to scale</figcaption>
+  </figure>
+
+  <div class="box">
+    <h3>Mission by the numbers</h3>
+    <div class="facts">
+      <div class="fact"><b>2,380 kg</b><span>launch mass with propellant</span></div>
+      <div class="fact"><b>~12 m</b><span>radar antenna reflector (39 ft)</span></div>
+      <div class="fact"><b>~747 km</b><span>orbit altitude (reported)</span></div>
+      <div class="fact"><b>77.5&deg;N to 87.5&deg;S</b><span>land and ice, twice every 12 days</span></div>
+      <div class="fact"><b>3 years</b><span>prime mission</span></div>
+      <div class="fact"><b>GSLV</b><span>ISRO launch vehicle, Sriharikota</span></div>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>Partner</th><th>Provides</th><th>Cost</th></tr>
+      <tr><td>NASA / JPL</td><td>L-band instrument, radar antenna reflector, deployable boom, engineering payload</td><td>$1.1589 billion</td></tr>
+      <tr><td>ISRO</td><td>S-band instrument and its processing algorithms (Space Applications Centre, Ahmedabad), spacecraft bus (U R Rao Satellite Centre, Bengaluru), launch vehicle, launch and mission operations</td><td>INR 7.88 billion</td></tr>
+    </table></div>
+    <p class="src">Source: NASA JPL NISAR Quick Facts. Orbit altitude as reported by Tribune India.</p>
+  </div>
+
+  <div class="box">
+    <h3>Timeline</h3>
+    <ol class="tl">
+      <li><time datetime="2025-07-30">30 July 2025</time>Launch from Satish Dhawan Space Centre, Sriharikota, on an ISRO GSLV.</li>
+      <li><time datetime="2025-08-21">21 August 2025</time>First L-band image captured of Mount Desert Island, Maine.</li>
+      <li><time datetime="2025-08-23">23 August 2025</time>L-band image captured of the Forest River area, North Dakota.</li>
+      <li><time datetime="2025-09">September 2025</time>NASA and ISRO release the first radar images of Earth's surface.</li>
+      <li><time>Prime mission</time>Three years of observations of land and ice surfaces. See the <a href="#gallery">Gallery</a> for the first images.</li>
+    </ol>
+  </div>
+
+  <div class="stats" aria-label="Key figures">
+    <div class="stat"><b data-count="12">12</b><span>days to cover the whole Earth</span></div>
+    <div class="stat"><b>&gt;240 km</b><span>swath width</span></div>
+    <div class="stat"><b>&lt;1 cm</b><span>surface movement detected</span></div>
+    <div class="stat"><b>2 bands</b><span>L-band 24 cm, S-band 9.4 cm</span></div>
+  </div>
+
+  <div class="box">
+    <p><b>NISAR</b> stands for <b>NASA-ISRO Synthetic Aperture Radar</b>. It uses Synthetic Aperture Radar (SAR) to observe Earth's surface. Unlike optical satellites, SAR collects useful images at night and through cloud, smoke and many weather conditions.</p>
+    <p>The mission helps scientists monitor earthquakes, landslides, volcanoes, floods, glaciers, forests, agriculture, wetlands, sea ice and ground deformation.</p>
+    <div class="callout"><b>Main goal:</b> measure changes in Earth's land, water, vegetation and ice to understand natural hazards, climate change, ecosystems and human impact on the planet.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>Important facts</h3>
+      <div class="scroll"><table>
+        <tr><th>Item</th><th>Details</th></tr>
+        <tr><td>Full name</td><td>NASA-ISRO Synthetic Aperture Radar</td></tr>
+        <tr><td>Partners</td><td>NASA and ISRO</td></tr>
+        <tr><td>Radar type</td><td>Synthetic Aperture Radar (SAR)</td></tr>
+        <tr><td>Radar bands</td><td>L-band and S-band</td></tr>
+        <tr><td>L-band wavelength</td><td>24 cm</td></tr>
+        <tr><td>S-band wavelength</td><td>9.4 cm</td></tr>
+        <tr><td>Swath width</td><td>More than 240 km</td></tr>
+        <tr><td>Global coverage</td><td>Entire Earth every 12 days</td></tr>
+        <tr><td>Movement detection</td><td>Smaller than 1 cm</td></tr>
+        <tr><td>Data access</td><td>Free and open</td></tr>
+      </table></div>
+      <p class="src">Source: NASA NISAR Mission Concept and About the Satellite.</p>
+    </div>
+    <div class="box">
+      <h3>Why NISAR matters</h3>
+      <ul>
+        <li>Detects very small movements in Earth's surface.</li>
+        <li>Works through clouds and at night.</li>
+        <li>Monitors forests, glaciers, agriculture and wetlands.</li>
+        <li>Helps track earthquakes, landslides, volcanoes and floods.</li>
+        <li>Supports disaster response and climate research.</li>
+        <li>Data are free for research and education.</li>
+      </ul>
+      <div class="callout">Try the <a href="#lab">Lab</a>: see how wavelength changes what an interferogram shows.</div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="panel" id="gallery" hidden>
+  <div class="eyebrow">First images</div>
+  <h2>NISAR's first radar images</h2>
+  <p class="lead muted">Both first images were captured by the L-band radar and released by NASA and ISRO. The official pictures are hosted on NASA's site and open in a new tab.</p>
+
+  <div class="shots">
+    <article class="shot">
+      <div class="head"><h3>Mount Desert Island, Maine</h3><span class="tag L">L-band</span><span class="tag">Captured 21 Aug 2025</span></div>
+      <div class="ill"><canvas class="scene" id="shotMaine" width="800" height="500" role="img" aria-label="Illustration of an island with a forested interior, a magenta town and dark water channels"></canvas><p class="src" style="padding:8px 16px 0;margin:0">Illustration of the scene in NISAR's colours, not NISAR data. The real image is on NASA's site.</p></div>
+      <div class="body">
+        <p>Water appears dark, forest appears green, and hard surfaces such as bare ground and buildings appear magenta. The town of Bar Harbor shows as a magenta patch at the island's northeast end, with narrow waterways and small islets around it.</p>
+        <a class="btnlink" href="https://www.jpl.nasa.gov/news/nasa-isro-satellite-sends-first-radar-images-of-earths-surface/" target="_blank" rel="noopener">View official image</a>
+      </div>
+    </article>
+    <article class="shot">
+      <div class="head"><h3>Forest River, North Dakota</h3><span class="tag L">L-band</span><span class="tag">Captured 23 Aug 2025</span></div>
+      <div class="ill"><canvas class="scene" id="shotND" width="800" height="500" role="img" aria-label="Illustration of farmland with irrigation circles and a river lined by forest and wetland"></canvas><p class="src" style="padding:8px 16px 0;margin:0">Illustration of the scene in NISAR's colours, not NISAR data. The real image is on NASA's site.</p></div>
+      <div class="body">
+        <p>The area straddles Grand Forks and Walsh counties. Forests and wetlands line the river, with farmland to the north and south. Dark plots are likely fallow fields, lighter plots likely pasture or crops such as soybean and corn. Circular patterns show centre-pivot irrigation.</p>
+        <a class="btnlink" href="https://www.jpl.nasa.gov/news/nasa-isro-satellite-sends-first-radar-images-of-earths-surface/" target="_blank" rel="noopener">View official image</a>
+      </div>
+    </article>
+  </div>
+
+  <div class="box" style="margin-top:18px">
+    <h3>How to read a radar image</h3>
+    <p class="muted">An illustrative scene drawn here with the same colour idea as the first images. It is not NISAR data.</p>
+    <canvas class="scene" id="scene" width="800" height="500" role="img" aria-label="Illustrative radar-style scene with a river, forest, town and irrigated fields"></canvas>
+    <div class="legend">
+      <span><i style="background:#0a1020"></i>Water: smooth surface, little signal returns</span>
+      <span><i style="background:#2f9a62"></i>Forest: rough, scatters signal</span>
+      <span><i style="background:#c0399f"></i>Buildings and bare ground: strong return</span>
+      <span><i style="background:#8fc24a"></i>Crops and pasture: brighter than fallow</span>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>More official image galleries</h3>
+    <div class="links">
+      <a href="https://science.nasa.gov/mission/nisar/" target="_blank" rel="noopener">NASA NISAR mission</a>
+      <a href="https://science.nasa.gov/mission/nisar/about-the-satellite/" target="_blank" rel="noopener">About the satellite</a>
+      <a href="https://www.earthdata.nasa.gov/data/platforms/space-based-platforms/nisar" target="_blank" rel="noopener">Earthdata NISAR</a>
+      <a href="https://www.isro.gov.in/" target="_blank" rel="noopener">ISRO</a>
+      <a href="https://bhoonidhi.nrsc.gov.in/" target="_blank" rel="noopener">ISRO Bhoonidhi</a>
+    </div>
+    <p class="src">Sources: NASA JPL, "NASA-ISRO Satellite Sends First Radar Images of Earth's Surface."</p>
+  </div>
+</section>
+
+<!-- NISAR DATA -->
+<section class="panel" id="data" hidden>
+  <div class="eyebrow">Products</div>
+  <h2>NISAR data</h2>
+  <p class="lead muted">Instruments, processing levels, product types, samples and file formats.</p>
+
+  <div class="box">
+    <h3>Instruments</h3>
+    <div class="scroll"><table>
+      <tr><th>Instrument</th><th>Provider</th><th>Wavelength</th><th>Main use</th></tr>
+      <tr><td>L-SAR</td><td>NASA</td><td>24 cm</td><td>Forest biomass, glaciers, ice sheets, soil moisture, ground deformation, vegetation structure.</td></tr>
+      <tr><td>S-SAR</td><td>ISRO</td><td>9.4 cm</td><td>Agriculture, soil moisture, vegetation, wetlands, surface change monitoring.</td></tr>
+    </table></div>
+    <p class="src">Source: NASA NISAR About the Satellite.</p>
+  </div>
+
+  <div class="box">
+    <h3>Data levels</h3>
+    <div class="scroll"><table>
+      <tr><th>Level</th><th>Meaning</th><th>Use</th></tr>
+      <tr><td>Level 0</td><td>Raw radar signal data</td><td>Advanced processing, archive, custom scientific analysis</td></tr>
+      <tr><td>Level 1</td><td>Calibrated and geolocated radar products</td><td>SAR image analysis, interferometry, polarimetry</td></tr>
+      <tr><td>Level 2</td><td>Derived geophysical products</td><td>Surface displacement, soil moisture, ice motion, forest structure</td></tr>
+      <tr><td>Level 3</td><td>Higher-level science products</td><td>Long-term monitoring, ecosystem studies, hazard analysis</td></tr>
+    </table></div>
+    <p class="src">Source: NASA NISAR Data Overview and Sample Data Product Suite.</p>
+  </div>
+
+  <div class="box">
+    <h3>Product types</h3>
+    <div class="chips" id="prodChips" role="group" aria-label="Filter products by use">
+      <button class="chip" type="button" aria-pressed="true" data-f="all">All</button>
+      <button class="chip" type="button" aria-pressed="false" data-f="deform">Deformation</button>
+      <button class="chip" type="button" aria-pressed="false" data-f="water">Floods and land cover</button>
+      <button class="chip" type="button" aria-pressed="false" data-f="ice">Ice and slopes</button>
+      <button class="chip" type="button" aria-pressed="false" data-f="veg">Vegetation and soil</button>
+    </div>
+    <div class="scroll"><table id="prodTable">
+      <tr><th>Product</th><th>Full form</th><th>Contains</th><th>Main use</th></tr>
+      <tr data-t="deform"><td>SLC</td><td>Single Look Complex</td><td>Radar amplitude and phase</td><td>InSAR, ground deformation, interferometry</td></tr>
+      <tr data-t="water veg"><td>GRD</td><td>Ground Range Detected</td><td>Radar intensity image</td><td>Flood mapping, land cover, forests</td></tr>
+      <tr data-t="water veg"><td>RTC</td><td>Radiometrically Terrain Corrected</td><td>Terrain-corrected radar image</td><td>Easy image analysis and classification</td></tr>
+      <tr data-t="deform"><td>Interferogram</td><td>InSAR product</td><td>Phase difference between two radar images</td><td>Earthquake movement, subsidence, volcano deformation</td></tr>
+      <tr data-t="veg water"><td>Polarimetric product</td><td>Polarimetric SAR</td><td>Multiple polarization channels</td><td>Crops, soil, forests, wetlands, land cover</td></tr>
+      <tr data-t="ice deform"><td>Pixel offset</td><td>Offset tracking product</td><td>Horizontal movement between images</td><td>Glaciers, landslides, ice flow</td></tr>
+    </table></div>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>Sample data products</h3>
+      <p class="muted">NASA released samples so students and researchers can learn the data format before downloading large operational products.</p>
+      <div class="scroll"><table>
+        <tr><th>Sample product</th><th>Use</th></tr>
+        <tr><td>Geocoded Single Look Complex</td><td>SAR image analysis, interferometry</td></tr>
+        <tr><td>Geocoded Unwrapped Interferogram</td><td>Ground deformation, surface movement</td></tr>
+        <tr><td>Geocoded Pixel Offsets</td><td>Glacier flow, landslides, horizontal movement</td></tr>
+        <tr><td>Geocoded Polarimetric Covariance</td><td>Forest, crop, soil, land cover</td></tr>
+        <tr><td>Range Doppler Single Look Complex</td><td>Signal processing, advanced analysis</td></tr>
+        <tr><td>Range Doppler Interferogram</td><td>Interferometric deformation studies</td></tr>
+        <tr><td>Soil Moisture Product</td><td>Agriculture, drought, irrigation, hydrology</td></tr>
+      </table></div>
+      <p class="src">Source: NASA Earthdata, "NISAR Sample Data Products Released."</p>
+    </div>
+    <div class="box">
+      <h3>Data formats</h3>
+      <p class="muted">Scientific and GIS-friendly formats.</p>
+      <div>
+        <span class="tag">HDF5</span><span class="tag">XML</span><span class="tag">YAML</span><span class="tag">PNG</span><span class="tag">KML</span><span class="tag">CSV</span><span class="tag">PDF</span>
+      </div>
+      <p class="src">Source: NASA Earthdata NISAR Sample Data Products.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SAR DATA -->
+<section class="panel" id="sar" hidden>
+  <div class="eyebrow">Radar</div>
+  <h2>SAR data</h2>
+  <div class="box">
+    <p><b>SAR</b> means <b>Synthetic Aperture Radar</b>, an imaging method that uses microwaves to build detailed images of Earth's surface.</p>
+    <p>A SAR satellite sends radar signals toward Earth and measures the reflection. That lets it observe the surface through clouds, darkness, smoke and some weather.</p>
+  </div>
+
+  <div class="box">
+    <h3>Radar bands compared</h3>
+    <p class="muted">Longer wavelengths penetrate vegetation more deeply and stay coherent over longer periods. Bars are drawn to scale.</p>
+    <div class="bars" id="bandBars"></div>
+    <p class="src">NISAR wavelengths from NASA. Sentinel-1 C-band is about 5.6 cm.</p>
+  </div>
+
+  <div class="box">
+    <h3>Major SAR missions</h3>
+    <div class="chips" id="bandChips" role="group" aria-label="Filter missions by band">
+      <button class="chip" type="button" aria-pressed="true" data-b="all">All bands</button>
+      <button class="chip" type="button" aria-pressed="false" data-b="L">L-band</button>
+      <button class="chip" type="button" aria-pressed="false" data-b="S">S-band</button>
+      <button class="chip" type="button" aria-pressed="false" data-b="C">C-band</button>
+    </div>
+    <div class="scroll"><table id="missionTable">
+      <tr><th>Mission</th><th>Band</th><th>Main applications</th><th>Data access</th></tr>
+      <tr data-b="L S"><td>NISAR</td><td><span class="tag L">L</span><span class="tag S">S</span></td><td>Ground deformation, glaciers, forests, soil moisture, disasters</td><td><a href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">ASF Vertex</a>, <a href="https://www.earthdata.nasa.gov/" target="_blank" rel="noopener">NASA Earthdata</a></td></tr>
+      <tr data-b="C"><td>Sentinel-1</td><td><span class="tag C">C</span></td><td>Floods, agriculture, sea ice, land deformation, forests</td><td><a href="https://dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Data Space</a></td></tr>
+      <tr data-b="L"><td>ALOS PALSAR</td><td><span class="tag L">L</span></td><td>Forests, wetlands, land cover, geology, biomass</td><td><a href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">ASF Vertex</a></td></tr>
+      <tr data-b="L"><td>UAVSAR</td><td><span class="tag L">L</span></td><td>Airborne radar for earthquakes, volcanoes, glaciers, deformation</td><td><a href="https://uavsar.jpl.nasa.gov/" target="_blank" rel="noopener">NASA UAVSAR</a></td></tr>
+      <tr data-b="C"><td>ERS-1 and ERS-2</td><td><span class="tag C">C</span></td><td>Historical SAR data for long-term change detection</td><td><a href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">ASF Vertex</a></td></tr>
+      <tr data-b="C"><td>Envisat ASAR</td><td><span class="tag C">C</span></td><td>Historical radar observations for environmental monitoring</td><td><a href="https://search.asf.alaska.edu/" target="_blank" rel="noopener">ASF Vertex</a></td></tr>
+    </table></div>
+  </div>
+
+  <div class="box">
+    <h3>SAR applications</h3>
+    <div class="grid2">
+      <ul>
+        <li><b>Earthquakes:</b> ground movement after an event.</li>
+        <li><b>Landslides:</b> unstable slopes and displacement.</li>
+        <li><b>Volcanoes:</b> deformation near vents.</li>
+        <li><b>Floods:</b> water-covered areas from radar backscatter.</li>
+        <li><b>Forests:</b> structure, biomass, deforestation.</li>
+      </ul>
+      <ul>
+        <li><b>Agriculture:</b> crop and soil-moisture studies.</li>
+        <li><b>Glaciers:</b> movement and ice loss.</li>
+        <li><b>Sea ice:</b> extent and movement.</li>
+        <li><b>Urban subsidence:</b> sinking land in cities.</li>
+        <li><b>Wetlands:</b> mapping and seasonal water change.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- LAB -->
+<section class="panel" id="lab" hidden>
+  <div class="eyebrow">Interactive</div>
+  <h2>Lab</h2>
+  <p class="lead muted">Five tools: an interferogram simulator, an orbit and coverage calculator, a terrain distortion explorer, a product finder and a short quiz.</p>
+
+  <div class="box">
+    <h3>Interferogram simulator</h3>
+    <p class="muted">One colour cycle (fringe) means the ground moved half a wavelength along the radar line of sight. Move the slider to simulate a bulge or subsidence bowl and compare the three bands.</p>
+    <label for="disp">Peak ground movement</label>
+    <input id="disp" type="range" min="0" max="30" step="0.5" value="6">
+    <div class="readout"><span id="dispOut">6.0</span> cm</div>
+    <div class="fr">
+      <figure><canvas id="cL" width="240" height="240" aria-label="L-band interferogram"></canvas><figcaption><span class="tag L">L-band 24 cm</span><br><b id="nL">0</b> fringes</figcaption></figure>
+      <figure><canvas id="cS" width="240" height="240" aria-label="S-band interferogram"></canvas><figcaption><span class="tag S">S-band 9.4 cm</span><br><b id="nS">0</b> fringes</figcaption></figure>
+      <figure><canvas id="cC" width="240" height="240" aria-label="C-band interferogram"></canvas><figcaption><span class="tag C">C-band 5.6 cm</span><br><b id="nC">0</b> fringes</figcaption></figure>
+    </div>
+    <p class="src">Fringes = movement / (wavelength / 2). Idealised model with a smooth bowl, no noise or atmosphere. Real interferograms also lose coherence over vegetation, more so at short wavelengths.</p>
+  </div>
+
+  <div class="box">
+    <h3>Orbit and coverage calculator</h3>
+    <p class="muted">Change the altitude and swath width to see how the orbit sets the 12-day coverage. The defaults are NISAR's reported altitude and swath. Ascending passes only; descending passes give a second set.</p>
+    <div class="grid2" style="margin-bottom:12px">
+      <div><label for="alt">Altitude</label><input id="alt" type="range" min="400" max="900" step="1" value="747"><div class="readout"><span id="altOut">747</span> km</div></div>
+      <div><label for="swath">Swath width</label><input id="swath" type="range" min="100" max="300" step="5" value="240"><div class="readout"><span id="swOut">240</span> km</div></div>
+    </div>
+    <div class="facts" aria-live="polite">
+      <div class="fact"><b id="oPer">-</b><span>orbit period</span></div>
+      <div class="fact"><b id="oDay">-</b><span>orbits per day</span></div>
+      <div class="fact"><b id="o12">-</b><span>orbits in 12 days</span></div>
+      <div class="fact"><b id="oGap">-</b><span>track spacing at the equator</span></div>
+      <div class="fact"><b id="oCov">-</b><span>swath divided by spacing</span></div>
+    </div>
+    <canvas class="scene" id="orbitCv" width="800" height="200" style="aspect-ratio:4/1" role="img" aria-label="Neighbouring ground tracks and their swaths along a 1,200 km stretch of the equator"></canvas>
+    <p class="src" id="oMsg"></p>
+    <p class="src">Period from Kepler's third law for a circular orbit. Spacing assumes the orbit repeats after 12 days with the rounded number of orbits. An estimate from physics, not an official mission figure.</p>
+  </div>
+
+  <div class="box">
+    <h3>Terrain distortion explorer</h3>
+    <p class="muted">A side-looking radar measures distance along its line of sight, so hills distort. Set the radar incidence angle and the hill slope to see foreshortening, layover and shadow. This is why terrain-corrected (RTC) products exist.</p>
+    <div class="grid2" style="margin-bottom:12px">
+      <div><label for="inc">Incidence angle</label><input id="inc" type="range" min="20" max="60" step="1" value="40"><div class="readout"><span id="incOut">40</span>&deg;</div></div>
+      <div><label for="slope">Hill slope</label><input id="slope" type="range" min="0" max="75" step="1" value="30"><div class="readout"><span id="slOut">30</span>&deg;</div></div>
+    </div>
+    <canvas class="scene" id="terCv" width="800" height="300" style="aspect-ratio:8/3" role="img" aria-label="A symmetric hill lit by radar from the left, with the shadow area shaded"></canvas>
+    <div class="facts" aria-live="polite" style="margin-top:12px">
+      <div class="fact"><b id="tNear">-</b><span>slope facing the radar</span></div>
+      <div class="fact"><b id="tFar">-</b><span>slope facing away</span></div>
+    </div>
+    <p class="src">Facing slope: layover when slope &gt; incidence angle, otherwise squeezed by sin(incidence &minus; slope) / sin(incidence). Far slope: shadow when slope &gt; 90&deg; &minus; incidence angle. Idealised flat geometry, no Earth curvature.</p>
+  </div>
+
+  <div class="box">
+    <h3>Which data do I need?</h3>
+    <label for="goal">My project is about</label>
+    <select id="goal">
+      <option value="flood">Flood mapping</option>
+      <option value="deform">Earthquake, volcano or subsidence</option>
+      <option value="glacier">Glacier or landslide movement</option>
+      <option value="forest">Forest biomass and structure</option>
+      <option value="crop">Crops and soil moisture</option>
+      <option value="learn">Just learning SAR</option>
+    </select>
+    <div class="result" id="finderOut" aria-live="polite"></div>
+  </div>
+
+  <div class="box">
+    <h3>Quick quiz</h3>
+    <div id="quiz"></div>
+    <div class="row2"><button class="btn ghost" id="quizReset" type="button">Restart</button><span class="score" id="score" aria-live="polite"></span></div>
+  </div>
+</section>
+
+<!-- PROBLEMS -->
+<section class="panel" id="problems" hidden>
+  <div class="eyebrow">Challenges</div>
+  <h2>Problems in the NISAR project</h2>
+  <p class="lead muted">Open a card to read the detail and jump to the matching solution.</p>
+  <div id="probList"></div>
+</section>
+
+<!-- SOLUTIONS -->
+<section class="panel" id="solutions" hidden>
+  <div class="eyebrow">Responses</div>
+  <h2>Solutions for NISAR problems</h2>
+  <p class="lead muted">Practical ways to work with the data and reduce errors.</p>
+  <div id="solList"></div>
+</section>
+
+<!-- SEARCH -->
+<section class="panel" id="search" hidden>
+  <div class="eyebrow">Earthdata</div>
+  <h2>Search NASA Earth data</h2>
+  <div class="box">
+    <p class="muted">Search NASA's Common Metadata Repository (CMR) for collections. The same query opens in Earthdata Search and ASF Vertex.</p>
+    <form id="sform" class="row2">
+      <div class="grow"><label for="sq">Keyword</label><input id="sq" type="text" value="NISAR" autocomplete="off"></div>
+      <div style="align-self:flex-end"><button class="btn" type="submit">Search</button></div>
+    </form>
+    <div class="chips" style="margin-top:12px" id="sugs">
+      <button class="chip" type="button" data-q="NISAR">NISAR</button>
+      <button class="chip" type="button" data-q="Sentinel-1">Sentinel-1</button>
+      <button class="chip" type="button" data-q="UAVSAR">UAVSAR</button>
+      <button class="chip" type="button" data-q="soil moisture SAR">Soil moisture</button>
+      <button class="chip" type="button" data-q="InSAR">InSAR</button>
+      <button class="chip" type="button" data-q="glacier velocity">Glaciers</button>
+    </div>
+    <div class="links" id="deep"></div>
+  </div>
+  <div id="sres" aria-live="polite"></div>
+</section>
+
+<!-- SOURCES -->
+<section class="panel" id="sources" hidden>
+  <div class="eyebrow">References</div>
+  <h2>Official sources</h2>
+  <div class="box"><div class="scroll"><table id="srcTable"><tr><th>Source</th><th>Link</th></tr></table></div></div>
+</section>
+
+</main>
+
+<div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle" aria-describedby="wText">
+  <div class="wcard">
+    <svg viewBox="0 0 72 72" aria-hidden="true"><ellipse class="ring" cx="36" cy="36" rx="30" ry="12" transform="rotate(-25 36 36)"/><circle class="core" cx="36" cy="36" r="9"/><circle class="dot" cx="62" cy="24" r="4"/></svg>
+    <h2 id="wTitle">Welcome to the Orbit Operator app</h2>
+    <p id="wText">Let's explore the NISAR data.</p>
+    <button class="btn" id="wGo" type="button">Let's explore</button>
+  </div>
+</div>
+
+<div class="launch" id="launch" hidden aria-hidden="true">
+  <canvas id="lcv"></canvas>
+  <div class="ltxt"><span id="lMsg">Powering up the radar</span><div class="lbar"><i id="lFill"></i></div></div>
+</div>
+
+<footer><div class="wrap">NISAR Explorer. Educational project on SAR data, challenges and solutions.</div></footer>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- tabs via hash ---------- */
+  var ids = $$("#tabs a").map(function (a) { return a.getAttribute("href").slice(1); });
+  function show(forced) {
+    var id = typeof forced === "string" ? forced : location.hash.slice(1);
+    if (ids.indexOf(id) < 0) id = "overview";
+    $$(".panel").forEach(function (p) { p.hidden = p.id !== id; });
+    $$("#tabs a").forEach(function (a) {
+      if (a.getAttribute("href") === "#" + id) { a.setAttribute("aria-current", "page"); a.scrollIntoView({ inline: "center", block: "nearest" }); }
+      else a.removeAttribute("aria-current");
+    });
+    window.__tab = id; window.scrollTo(0, 0);
+    if (id === "lab") drawAll();
+    if (id === "gallery") { drawScene(); drawShots(); }
+  }
+
+  /* ---------- illustrated versions of the two first-image scenes ---------- */
+  var shotsDone = false;
+  function drawShots() {
+    if (shotsDone) return; shotsDone = true;
+    var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function speckle(g, W, H) {
+      var im = g.getImageData(0, 0, W, H), d = im.data;
+      for (var k = 0; k < d.length; k += 4) { var s = 0.72 + rnd() * 0.5; d[k] = Math.min(255, d[k] * s); d[k + 1] = Math.min(255, d[k + 1] * s); d[k + 2] = Math.min(255, d[k + 2] * s); }
+      g.putImageData(im, 0, 0);
+    }
+    /* Maine island */
+    var a = $("#shotMaine"), g = a.getContext("2d"), W = a.width, H = a.height, i;
+    g.fillStyle = "#0b1226"; g.fillRect(0, 0, W, H);
+    var rot = -0.35, cr = Math.cos(rot), sr = Math.sin(rot);
+    for (i = 0; i < 900; i++) {
+      var th = rnd() * 6.283, rr = Math.sqrt(rnd()), ex = 270 * rr * Math.cos(th), ey = 170 * rr * Math.sin(th);
+      g.fillStyle = ["#2a8a58", "#2f9a62", "#37a56b", "#25784d"][i % 4];
+      g.beginPath(); g.arc(400 + ex * cr - ey * sr, 270 + ex * sr + ey * cr, 10 + rnd() * 24, 0, 7); g.fill();
+    }
+    for (i = 0; i < 40; i++) { g.fillStyle = rnd() < .5 ? "#2f9a62" : "#37a56b"; g.beginPath(); g.arc(560 + rnd() * 220, 60 + rnd() * 120, 3 + rnd() * 9, 0, 7); g.fill(); }
+    g.strokeStyle = "#0b1226"; g.lineCap = "round"; g.lineWidth = 16;
+    g.beginPath(); g.moveTo(390, 470); g.bezierCurveTo(380, 400, 400, 360, 385, 290); g.stroke();
+    g.lineWidth = 9; g.beginPath(); g.moveTo(300, 330); g.lineTo(340, 300); g.moveTo(520, 220); g.lineTo(560, 170); g.stroke();
+    g.fillStyle = "#c0399f"; g.fillRect(585, 150, 70, 48); g.fillStyle = "#d45bb8"; g.fillRect(560, 185, 40, 26); g.fillStyle = "#a02d86"; g.fillRect(620, 130, 34, 24);
+    g.fillStyle = "#b8409c"; g.fillRect(250, 340, 18, 12); g.fillRect(470, 300, 14, 10);
+    speckle(g, W, H);
+    /* North Dakota farmland and river */
+    var b = $("#shotND"), h = b.getContext("2d");
+    var cols = ["#8fc24a", "#3f6f2c", "#a9d05a", "#4c7f33", "#789e3a", "#2e5a22", "#bfe06c"];
+    for (var r = 0; r < 5; r++) for (var q = 0; q < 8; q++) { h.fillStyle = cols[Math.floor(rnd() * cols.length)]; h.fillRect(q * 100, r * 100, 100, 100); }
+    [[130, 90, 44], [320, 420, 44], [640, 80, 44], [700, 420, 40], [480, 60, 36]].forEach(function (p) { h.fillStyle = "#c6e47a"; h.beginPath(); h.arc(p[0], p[1], p[2], 0, 7); h.fill(); h.strokeStyle = "#456f2d"; h.lineWidth = 2; h.beginPath(); h.moveTo(p[0], p[1]); h.lineTo(p[0] + p[2], p[1]); h.stroke(); });
+    h.lineCap = "round";
+    h.strokeStyle = "#1d6642"; h.lineWidth = 64; h.beginPath(); h.moveTo(-20, 250); h.bezierCurveTo(160, 180, 300, 330, 460, 240); h.bezierCurveTo(580, 170, 700, 280, 840, 220); h.stroke();
+    h.strokeStyle = "#8fdcae"; h.lineWidth = 30; h.beginPath(); h.moveTo(-20, 250); h.bezierCurveTo(160, 180, 300, 330, 460, 240); h.bezierCurveTo(580, 170, 700, 280, 840, 220); h.stroke();
+    h.strokeStyle = "#0b1226"; h.lineWidth = 5; h.beginPath(); h.moveTo(-20, 250); h.bezierCurveTo(160, 180, 300, 330, 460, 240); h.bezierCurveTo(580, 170, 700, 280, 840, 220); h.stroke();
+    speckle(h, b.width, b.height);
+  }
+
+  /* ---------- illustrative radar-style scene ---------- */
+  var sceneDone = false;
+  function drawScene() {
+    if (sceneDone) return; sceneDone = true;
+    var c = $("#scene"), g = c.getContext("2d"), W = c.width, H = c.height;
+    var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    g.fillStyle = "#2f9a62"; g.fillRect(0, 0, W, H);
+    for (var i = 0; i < 260; i++) { g.fillStyle = rnd() < .5 ? "#2a8a58" : "#37a56b"; g.beginPath(); g.arc(rnd() * W, rnd() * H, 6 + rnd() * 16, 0, 7); g.fill(); }
+    g.fillStyle = "#6f9f3d"; g.fillRect(0, H * .62, W, H * .38);
+    var cols = ["#8fc24a", "#3f6f2c", "#a9d05a", "#4c7f33", "#789e3a"];
+    for (var r = 0; r < 4; r++) for (var q = 0; q < 8; q++) { g.fillStyle = cols[(r * 3 + q) % 5]; g.fillRect(q * 100 + 3, H * .64 + r * 46 + 3, 94, 40); }
+    [[150, 420], [470, 440], [650, 380]].forEach(function (p) { g.fillStyle = "#b5da66"; g.beginPath(); g.arc(p[0], p[1], 34, 0, 7); g.fill(); g.strokeStyle = "#456f2d"; g.lineWidth = 2; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[0] + 34, p[1]); g.stroke(); });
+    g.strokeStyle = "#0a1020"; g.lineWidth = 26; g.lineCap = "round"; g.beginPath(); g.moveTo(-20, 150); g.bezierCurveTo(200, 60, 320, 260, 520, 150); g.bezierCurveTo(640, 80, 740, 150, 840, 90); g.stroke();
+    g.lineWidth = 12; g.beginPath(); g.moveTo(330, 190); g.bezierCurveTo(360, 280, 340, 300, 380, 330); g.stroke();
+    g.fillStyle = "#c0399f"; g.fillRect(560, 215, 120, 70); g.fillStyle = "#a02d86"; g.fillRect(585, 235, 40, 30); g.fillRect(640, 225, 30, 40); g.fillStyle = "#d45bb8"; g.fillRect(540, 270, 60, 26);
+    var im = g.getImageData(0, 0, W, H), d = im.data;
+    for (var k = 0; k < d.length; k += 4) { var s = 0.7 + rnd() * 0.5; d[k] = Math.min(255, d[k] * s); d[k + 1] = Math.min(255, d[k + 1] * s); d[k + 2] = Math.min(255, d[k + 2] * s); }
+    g.putImageData(im, 0, 0);
+  }
+  window.addEventListener("hashchange", show);
+
+  /* ---------- theme ---------- */
+  var mode = "auto";
+  $("#theme").addEventListener("click", function () {
+    mode = mode === "auto" ? "light" : mode === "light" ? "dark" : "auto";
+    if (mode === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", mode);
+    this.textContent = "Theme: " + mode;
+    if (window.__tab === "lab") setTimeout(drawAll, 0);
+  });
+
+  /* ---------- product + mission filters ---------- */
+  function chipFilter(group, attr, rows) {
+    $$(group + " .chip").forEach(function (c) {
+      c.addEventListener("click", function () {
+        $$(group + " .chip").forEach(function (x) { x.setAttribute("aria-pressed", x === c ? "true" : "false"); });
+        var v = c.getAttribute(attr);
+        $$(rows).forEach(function (r) {
+          var t = (r.getAttribute(attr === "data-f" ? "data-t" : "data-b") || "").split(" ");
+          r.hidden = !(v === "all" || t.indexOf(v) >= 0);
+        });
+      });
+    });
+  }
+  chipFilter("#prodChips", "data-f", "#prodTable tr[data-t]");
+  chipFilter("#bandChips", "data-b", "#missionTable tr[data-b]");
+
+  /* ---------- band bars (to scale) ---------- */
+  var bands = [["NISAR L-band", 24, "var(--accent)"], ["NISAR S-band", 9.4, "var(--teal)"], ["Sentinel-1 C", 5.6, "var(--amber)"]];
+  $("#bandBars").innerHTML = bands.map(function (b) {
+    return '<div class="bar"><span>' + b[0] + '</span><span><i style="width:' + (b[1] / 24 * 100) + '%;background:' + b[2] + '"></i></span><span class="num">' + b[1] + ' cm</span></div>';
+  }).join("");
+
+  /* ---------- InSAR simulator ---------- */
+  var cv = { L: [$("#cL"), 24], S: [$("#cS"), 9.4], C: [$("#cC"), 5.6] };
+  function hsl2rgb(h, s, l) {
+    var a = s * Math.min(l, 1 - l);
+    var f = function (n) { var k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  }
+  function draw(key, peak) {
+    var c = cv[key][0], lam = cv[key][1], n = c.width, ctx = c.getContext("2d");
+    var img = ctx.createImageData(n, n), sig = n * 0.22;
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+      var dx = x - n / 2, dy = y - n / 2;
+      var d = peak * Math.exp(-(dx * dx + dy * dy) / (2 * sig * sig));
+      var ph = ((4 * Math.PI * d / lam) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      var rgb = hsl2rgb(ph / (2 * Math.PI) * 360, 0.85, 0.55), i = (y * n + x) * 4;
+      img.data[i] = rgb[0]; img.data[i + 1] = rgb[1]; img.data[i + 2] = rgb[2]; img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    $("#n" + key).textContent = (peak / (lam / 2)).toFixed(1);
+  }
+  function drawAll() {
+    var v = parseFloat($("#disp").value);
+    $("#dispOut").textContent = v.toFixed(1);
+    Object.keys(cv).forEach(function (k) { draw(k, v); });
+    renderOrbit(); renderTerrain();
+  }
+  $("#disp").addEventListener("input", function () { var v = parseFloat(this.value); $("#dispOut").textContent = v.toFixed(1); Object.keys(cv).forEach(function (k) { draw(k, v); }); });
+
+  /* ---------- orbit and coverage ---------- */
+  function tok(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888"; }
+  function renderOrbit() {
+    var h = +$("#alt").value, w = +$("#swath").value;
+    $("#altOut").textContent = h; $("#swOut").textContent = w;
+    var a = 6371 + h, T = 2 * Math.PI * Math.sqrt(a * a * a / 398600.4418);
+    var n12 = Math.round(12 * 86400 / T), gap = 40075 / n12, cov = w / gap;
+    $("#oPer").textContent = (T / 60).toFixed(1) + " min";
+    $("#oDay").textContent = (86400 / T).toFixed(2);
+    $("#o12").textContent = n12;
+    $("#oGap").textContent = gap.toFixed(0) + " km";
+    $("#oCov").textContent = cov.toFixed(2);
+    $("#oMsg").textContent = cov >= 1 ? "Neighbouring swaths overlap, so ascending passes cover the whole equator in 12 days." : "Swaths leave gaps of about " + (gap - w).toFixed(0) + " km between tracks. Descending passes and later cycles would fill some of them.";
+    var c = $("#orbitCv"), g = c.getContext("2d"), W = c.width, H = c.height, win = 1200, k = W / win;
+    g.fillStyle = tok("--surface2"); g.fillRect(0, 0, W, H);
+    g.globalAlpha = 0.4; g.fillStyle = tok("--accent");
+    for (var x = gap / 2; x < win + w; x += gap) g.fillRect((x - w / 2) * k, 30, w * k, H - 60);
+    g.globalAlpha = 1; g.fillStyle = tok("--accent");
+    for (x = gap / 2; x < win + w; x += gap) g.fillRect(x * k - 1, 30, 2, H - 60);
+    g.fillStyle = tok("--muted"); g.font = "14px " + tok("--f-mono");
+    g.fillText("1,200 km of the equator", 10, 20); g.fillText("track spacing " + gap.toFixed(0) + " km, swath " + w + " km", 10, H - 10);
+  }
+  ["#alt", "#swath"].forEach(function (s) { $(s).addEventListener("input", renderOrbit); });
+
+  /* ---------- terrain distortion ---------- */
+  function renderTerrain() {
+    var th = +$("#inc").value, al = +$("#slope").value, r = Math.PI / 180;
+    $("#incOut").textContent = th; $("#slOut").textContent = al;
+    var c = $("#terCv"), g = c.getContext("2d"), W = c.width, H = c.height, gy = H - 40, cx = W / 2, half = 150;
+    var hh = Math.min(half * Math.tan(al * r), 200);
+    g.fillStyle = tok("--surface2"); g.fillRect(0, 0, W, H);
+    var px = cx, py = gy - hh, shEnd = px + hh * Math.tan(th * r), shStart = cx + half;
+    if (shEnd > shStart) { g.fillStyle = tok("--bad"); g.globalAlpha = 0.35; g.fillRect(shStart, gy - 4, shEnd - shStart, 8); g.globalAlpha = 1; }
+    g.strokeStyle = tok("--accent"); g.globalAlpha = 0.7; g.lineWidth = 1.5;
+    [[cx - half, gy], [px, py], [cx - half - 120, gy]].forEach(function (p) {
+      var dx = Math.sin(th * r), dy = Math.cos(th * r), L = 700;
+      g.beginPath(); g.moveTo(p[0] - dx * L, p[1] - dy * L); g.lineTo(p[0], p[1]); g.stroke();
+    });
+    g.globalAlpha = 1;
+    g.fillStyle = tok("--teal"); g.beginPath(); g.moveTo(cx - half, gy); g.lineTo(px, py); g.lineTo(cx + half, gy); g.closePath(); g.fill();
+    g.strokeStyle = tok("--line"); g.lineWidth = 2; g.beginPath(); g.moveTo(0, gy); g.lineTo(W, gy); g.stroke();
+    g.fillStyle = tok("--muted"); g.font = "14px " + tok("--f-mono"); g.fillText("radar looks from the upper left", 12, 24);
+    if (shEnd > shStart) g.fillText("shadow", (shStart + shEnd) / 2 - 24, gy + 26);
+    $("#tNear").textContent = al > th ? "Layover" : al === th ? "Extreme foreshortening" : "Squeezed to " + Math.round(Math.sin((th - al) * r) / Math.sin(th * r) * 100) + "% length";
+    $("#tFar").textContent = al > 90 - th ? "Radar shadow" : "Stretched to " + Math.round(Math.sin((th + al) * r) / Math.sin(th * r) * 100) + "% length";
+  }
+  ["#inc", "#slope"].forEach(function (s) { $(s).addEventListener("input", renderTerrain); });
+
+  /* ---------- product finder ---------- */
+  var finder = {
+    flood: { prod: "GRD or RTC", lvl: "Level 1", band: "L-band or S-band", tool: "QGIS, SNAP, ASF HyP3", tip: "Water appears dark in radar backscatter. Use RTC for easier visual analysis." },
+    deform: { prod: "SLC, then Interferogram", lvl: "Level 1 to Level 2", band: "L-band", tool: "ISCE, ASF HyP3, Python", tip: "Use images from the same orbit, apply atmospheric correction and validate with GPS." },
+    glacier: { prod: "Pixel offset", lvl: "Level 2", band: "L-band", tool: "QGIS, Python", tip: "Offset tracking measures horizontal movement between two images." },
+    forest: { prod: "Polarimetric product", lvl: "Level 2 or Level 3", band: "L-band", tool: "QGIS, Google Earth Engine, Python", tip: "L-SAR is used for forest biomass and vegetation structure." },
+    crop: { prod: "Soil moisture product or Polarimetric product", lvl: "Level 2", band: "S-band and L-band", tool: "QGIS, Google Earth Engine, Python", tip: "S-SAR is suited to agriculture, vegetation and wetlands." },
+    learn: { prod: "NISAR sample products", lvl: "Level 1 or Level 2", band: "Any", tool: "QGIS, then SNAP", tip: "Start with samples and Sentinel-1 or UAVSAR practice data. Avoid Level 0 raw data at first." }
+  };
+  function renderFinder() {
+    var f = finder[$("#goal").value];
+    $("#finderOut").innerHTML = "<dl><dt>Product</dt><dd>" + f.prod + "</dd><dt>Level</dt><dd>" + f.lvl + "</dd><dt>Band</dt><dd>" + f.band + "</dd><dt>Tools</dt><dd>" + f.tool + "</dd><dt>Tip</dt><dd>" + f.tip + "</dd></dl>";
+  }
+  $("#goal").addEventListener("change", renderFinder);
+  renderFinder();
+
+  /* ---------- quiz ---------- */
+  var Q = [
+    ["What does a longer radar wavelength generally do?", ["Penetrates vegetation more deeply", "Gives a narrower swath", "Needs daylight"], 0, "L-band (24 cm) is used for forest biomass and structure."],
+    ["How often does NISAR cover the entire Earth?", ["Every 12 days", "Every day", "Every 6 months"], 0, "NASA states global coverage every 12 days."],
+    ["Which product holds amplitude and phase for InSAR?", ["RTC", "SLC", "GRD"], 1, "Single Look Complex keeps phase, which interferometry needs."],
+    ["Which level should a beginner usually avoid?", ["Level 2", "Level 1", "Level 0"], 2, "Level 0 is raw radar signal data meant for advanced processing."],
+    ["Which tool is cloud-based SAR processing?", ["ASF HyP3", "QGIS", "KML"], 0, "HyP3 runs SAR processing in the cloud, so you download less."],
+    ["Which format are NISAR products mainly provided in?", ["JPEG", "HDF5", "DOCX"], 1, "HDF5 is the main scientific format, alongside XML, YAML, PNG, KML, CSV and PDF."]
+  ];
+  var right = 0, answered = 0;
+  function renderQuiz() {
+    right = 0; answered = 0; $("#score").textContent = "";
+    var host = $("#quiz"); host.innerHTML = "";
+    Q.forEach(function (q, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var p = document.createElement("p"); p.textContent = (qi + 1) + ". " + q[0]; d.appendChild(p);
+      var o = document.createElement("div"); o.className = "opts";
+      var why = document.createElement("div"); why.className = "why"; why.hidden = true; why.textContent = q[3];
+      q[1].forEach(function (t, ti) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "opt"; b.textContent = t;
+        b.addEventListener("click", function () {
+          if (d.getAttribute("data-done")) return;
+          d.setAttribute("data-done", "1"); answered++;
+          var kids = o.children;
+          if (ti === q[2]) { right++; b.classList.add("right"); } else { b.classList.add("wrong"); kids[q[2]].classList.add("right"); }
+          why.hidden = false;
+          if (answered === Q.length) $("#score").textContent = "Score: " + right + " / " + Q.length;
+        });
+        o.appendChild(b);
+      });
+      d.appendChild(o); d.appendChild(why); host.appendChild(d);
+    });
+  }
+  $("#quizReset").addEventListener("click", renderQuiz);
+  renderQuiz();
+
+  /* ---------- problems + solutions ---------- */
+  var P = [
+    ["Huge data volume", "NISAR produces very large SAR datasets because it observes Earth frequently and over wide areas. Downloading and storing full products is hard for students, colleges and small research teams.", "NASA provides sample products and lets users search by location, date and product type to reduce unnecessary downloads.", [1]],
+    ["Complex SAR processing", "SAR data are harder than optical images. Users must understand radar geometry, polarization, phase, terrain correction, calibration and image alignment.", "NASA provides documentation, sample products and processing guidance through the NISAR Handbook and Earthdata resources.", [2, 4, 6]],
+    ["Calibration and validation", "Radar measurements must be accurate across land types, weather, orbits and time. Without proper calibration, results may be wrong.", "NASA uses pre-launch modelling, laboratory measurements, simulations, post-launch calibration and validation activities.", [3]],
+    ["Large antenna deployment", "NISAR uses a very large radar reflector antenna. It must fold into the launch vehicle and then open correctly in space.", "NASA designed a multi-step folding and locking deployment system for the antenna.", []],
+    ["Observation planning", "NISAR must observe forests, glaciers, farmland, sea ice, volcanoes and fast-deforming areas. Different science goals need different radar modes.", "NASA states that the variety of radar modes adds complexity to the observation plan.", []],
+    ["Polar coverage limitation", "NISAR is a left-looking radar satellite, which limits complete Arctic polar coverage.", "NASA states that other SAR satellites may be needed for complete Arctic coverage.", [7]],
+    ["Interferometric errors", "InSAR can be affected by atmosphere, orbit errors, terrain, vegetation change, noise and incorrect image pairing.", "These errors can create false ground-motion signals, so results must be checked across multiple dates and with ground-based measurements.", [5]],
+    ["User skill gap", "SAR data are not ordinary photographs. Phase, polarization, radar geometry and data levels must be understood.", "NASA released sample products and documentation to help users learn the NISAR data format and workflow.", [6]],
+    ["Data discovery", "Users may not know which product level, date, area, polarization or file format their project needs.", "NASA Earthdata Search and ASF Vertex allow search by location, acquisition date and product type.", [2]]
+  ];
+  var S = [
+    ["Reduce data download", ["Download only the required area.", "Select only the required date range.", "Use sample products for learning.", "Use cloud processing instead of downloading full datasets.", "Process a small subset before downloading the complete product."]],
+    ["Use ready-made products", ["Beginners should use Level 1 or Level 2 products.", "Avoid Level 0 raw data unless advanced radar processing is needed.", "Use RTC products for easier visual analysis.", "Use GRD products for flood and land-cover mapping.", "Use SLC products only for InSAR and phase analysis."]],
+    ["Improve calibration", ["Use corner reflectors for radar calibration.", "Compare satellite results with ground measurements.", "Use GNSS/GPS data for validation.", "Use field campaigns for vegetation and soil studies.", "Apply continuous post-launch calibration."]],
+    ["Use correct tools", ["<b>QGIS:</b> view and analyse geospatial data.", "<b>SNAP:</b> Sentinel-1 and SAR processing.", "<b>ASF HyP3:</b> cloud-based SAR processing.", "<b>ISCE:</b> InSAR processing.", "<b>Python:</b> automation, charts and data analysis.", "<b>Google Earth Engine:</b> large-scale geospatial analysis."]],
+    ["Reduce InSAR errors", ["Use images from the same satellite and orbit.", "Choose dates with similar weather conditions.", "Apply atmospheric correction and filtering.", "Remove noisy or low-coherence areas.", "Validate results with GPS, field data and other satellites."]],
+    ["Improve learning", ["Start with sample products.", "Learn basic SAR concepts before using raw data.", "Use NASA tutorials and documentation.", "Practise with Sentinel-1 and UAVSAR data.", "Use simple workflows before advanced InSAR analysis."]],
+    ["Use complementary satellites", ["Use Sentinel-1 for frequent C-band observations.", "Use ALOS PALSAR for historical L-band data.", "Use UAVSAR for airborne radar studies.", "Use other SAR missions to support polar and regional coverage."]]
+  ];
+  $("#probList").innerHTML = P.map(function (p, i) {
+    var links = p[3].length ? '<div class="links">' + p[3].map(function (n) { return '<a href="#solutions" data-s="' + n + '">Solution ' + n + ': ' + S[n - 1][0] + '</a>'; }).join("") + "</div>" : '<p class="src">This is a hardware or mission-design challenge handled by NASA and ISRO, not by data users.</p>';
+    return "<details><summary>" + (i + 1) + ". " + p[0] + '</summary><div class="dbody"><p>' + p[1] + '</p><p class="src">' + p[2] + "</p>" + links + "</div></details>";
+  }).join("");
+  $("#solList").innerHTML = S.map(function (s, i) {
+    return '<details id="sol' + (i + 1) + '"><summary>' + (i + 1) + ". " + s[0] + '</summary><div class="dbody"><ul>' + s[1].map(function (t) { return "<li>" + t + "</li>"; }).join("") + "</ul></div></details>";
+  }).join("");
+  /* in-page navigation: handle every #link ourselves so it works inside the sandboxed frame */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute("href").slice(1);
+    if (ids.indexOf(id) < 0) return;
+    e.preventDefault();
+    show(id);
+    try { history.replaceState(null, "", "#" + id); } catch (err) { /* ignore */ }
+    var n = a.getAttribute("data-s");
+    if (n) { var d = $("#sol" + n); if (d) { d.open = true; d.scrollIntoView({ block: "center" }); } }
+  });
+
+  /* ---------- sources ---------- */
+  var SRC = [
+    ["NASA NISAR Mission", "https://science.nasa.gov/mission/nisar/"],
+    ["NISAR Mission Overview", "https://science.nasa.gov/mission/nisar/mission-overview/"],
+    ["About the NISAR Satellite", "https://science.nasa.gov/mission/nisar/about-the-satellite/"],
+    ["NISAR Data Overview", "https://science.nasa.gov/mission/nisar/data/"],
+    ["NISAR Sample Data", "https://science.nasa.gov/mission/nisar/sample-data/"],
+    ["NISAR Calibration and Validation", "https://science.nasa.gov/mission/nisar/calibration-and-validation/"],
+    ["NASA-ISRO Partnership", "https://science.nasa.gov/mission/nisar/isro-partnership/"],
+    ["NASA Earthdata NISAR", "https://www.earthdata.nasa.gov/data/platforms/space-based-platforms/nisar"],
+    ["NASA Earthdata Search", "https://www.earthdata.nasa.gov/data/tools/earthdata-search"],
+    ["NASA CMR API", "https://cmr.earthdata.nasa.gov/search/site/docs/search/api.html"],
+    ["ASF Vertex", "https://search.asf.alaska.edu/"],
+    ["ISRO Bhoonidhi", "https://bhoonidhi.nrsc.gov.in/"],
+    ["NASA UAVSAR", "https://uavsar.jpl.nasa.gov/"],
+    ["JPL NISAR Quick Facts", "https://www.jpl.nasa.gov/press-kits/nisar/quick-facts"],
+    ["First radar images (NASA JPL)", "https://www.jpl.nasa.gov/news/nasa-isro-satellite-sends-first-radar-images-of-earths-surface/"],
+    ["ISRO", "https://www.isro.gov.in/"]
+  ];
+  SRC.forEach(function (s) {
+    var tr = document.createElement("tr"), a = document.createElement("a"), td1 = document.createElement("td"), td2 = document.createElement("td"), b = document.createElement("button");
+    td1.textContent = s[0]; a.href = s[1]; a.target = "_blank"; a.rel = "noopener"; a.textContent = s[1];
+    b.type = "button"; b.className = "copy"; b.textContent = "Copy";
+    b.addEventListener("click", function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
+      var fail = function () { var r = document.createRange(); r.selectNodeContents(a); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = "Selected"; };
+      try { navigator.clipboard.writeText(s[1]).then(done, fail); } catch (e) { fail(); }
+    });
+    td2.appendChild(a); td2.appendChild(b); tr.appendChild(td1); tr.appendChild(td2); $("#srcTable").appendChild(tr);
+  });
+
+  /* ---------- search ---------- */
+  function deepLinks(q) {
+    var e = encodeURIComponent(q), box = $("#deep"); box.innerHTML = "";
+    [["Earthdata Search", "https://search.earthdata.nasa.gov/search?q=" + e], ["ASF Vertex", "https://search.asf.alaska.edu/"], ["CMR JSON", "https://cmr.earthdata.nasa.gov/search/collections.json?page_size=10&keyword=" + e]].forEach(function (l) {
+      var a = document.createElement("a"); a.href = l[1]; a.target = "_blank"; a.rel = "noopener"; a.textContent = l[0] + " ↗"; box.appendChild(a);
+    });
+  }
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; }
+  function search(q) {
+    var out = $("#sres"); out.innerHTML = ""; deepLinks(q);
+    if (!q) { out.appendChild(el("p", "err", "Enter a search term.")); return; }
+    out.appendChild(el("p", "note", "Searching NASA CMR…"));
+    fetch("https://cmr.earthdata.nasa.gov/search/collections.json?page_size=10&keyword=" + encodeURIComponent(q), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        out.innerHTML = "";
+        var items = (j.feed && j.feed.entry) || [];
+        if (!items.length) { out.appendChild(el("p", "note", "No collections found. Try another term.")); return; }
+        items.forEach(function (it) {
+          var b = el("div", "res");
+          b.appendChild(el("h3", "", it.title || "Untitled collection"));
+          b.appendChild(el("p", "", (it.summary || "No description available.").slice(0, 320) + ((it.summary || "").length > 320 ? "…" : "")));
+          [it.short_name, it.version_id && "v" + it.version_id, it.processing_level_id, it.data_center].forEach(function (t) { if (t) b.appendChild(el("span", "tag", t)); });
+          var a = el("a", "", " Open in Earthdata Search ↗"); a.href = "https://search.earthdata.nasa.gov/search?q=" + encodeURIComponent(it.short_name || it.title); a.target = "_blank"; a.rel = "noopener";
+          b.appendChild(el("br")); b.appendChild(a); out.appendChild(b);
+        });
+      })
+      .catch(function () {
+        out.innerHTML = "";
+        out.appendChild(el("p", "note", "Live results cannot load inside this page, because it blocks calls to other sites. Use the links above to run the same search on NASA's own tools, or save this page as a file and open it in a browser to search live."));
+      });
+  }
+  $("#sform").addEventListener("submit", function (e) { e.preventDefault(); search($("#sq").value.trim()); });
+  $$("#sugs .chip").forEach(function (c) { c.addEventListener("click", function () { $("#sq").value = c.getAttribute("data-q"); search(c.getAttribute("data-q")); }); });
+  deepLinks("NISAR");
+
+  show();
+
+  /* ---------- welcome dialog ---------- */
+  var wel = $("#welcome");
+  function closeWelcome() { wel.hidden = true; document.removeEventListener("keydown", wkey); }
+  function wkey(e) { if (e.key === "Escape") closeWelcome(); }
+  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ptr = { x: 0.5, y: 0.5 };
+  function onMove(e) { var t = e.touches ? e.touches[0] : e; if (t) { ptr.x = t.clientX / innerWidth; ptr.y = t.clientY / innerHeight; } }
+  document.addEventListener("mousemove", onMove); document.addEventListener("touchmove", onMove, { passive: true });
+
+  function startLaunch() {
+    closeWelcome();
+    if (reduced) return;
+    var L = $("#launch"), cv = $("#lcv"), g = cv.getContext("2d"), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = innerWidth, H = innerHeight, D = 2800, t0 = performance.now(), done = false, i;
+    cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    L.hidden = false; L.classList.remove("out");
+    var stars = []; for (i = 0; i < 240; i++) stars.push({ a: Math.random() * 6.283, r: Math.random(), z: 0.2 + Math.random() * 0.8 });
+    var cBg = tok("--bg"), cFg = tok("--fg"), cAcc = tok("--accent"), cAmb = tok("--amber"), cTeal = tok("--teal");
+    var maxR = Math.hypot(W, H) / 2, msgs = ["Powering up the radar", "Locking onto the orbit", "Entering NISAR data"];
+    function finish() { if (done) return; done = true; L.classList.add("out"); setTimeout(function () { L.hidden = true; }, 520); }
+    L.addEventListener("click", finish, { once: true });
+    function frame(now) {
+      if (done) return;
+      var p = Math.min(1, (now - t0) / D), s = Math.sin(Math.PI * p);
+      var cx = W / 2 + (0.5 - ptr.x) * 40, cy = H / 2 + (0.5 - ptr.y) * 40, m = Math.min(W, H);
+      g.globalAlpha = 1; g.fillStyle = cBg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = cFg; g.lineWidth = 1.2;
+      stars.forEach(function (st) {
+        var r0 = st.r; st.r += (0.003 + 0.028 * s) * (0.3 + st.z); if (st.r > 1) { st.r = 0.02; st.a = Math.random() * 6.283; r0 = st.r; }
+        var ra = st.r * maxR, rb = Math.max(0, ra - (2 + 70 * s * st.z));
+        g.globalAlpha = 0.2 + 0.6 * st.z * st.r;
+        g.beginPath(); g.moveTo(cx + Math.cos(st.a) * rb, cy + Math.sin(st.a) * rb); g.lineTo(cx + Math.cos(st.a) * ra, cy + Math.sin(st.a) * ra); g.stroke();
+      });
+      g.strokeStyle = cAcc; g.lineWidth = 2;
+      for (i = 0; i < 4; i++) { var q = (p * 2 + i / 4) % 1, rr = q * m * 0.5; g.globalAlpha = (1 - q) * 0.7; g.beginPath(); g.arc(cx, cy, rr, 0, 6.283); g.stroke(); }
+      g.save(); g.translate(cx, cy); g.rotate(p * Math.PI * 6);
+      g.globalAlpha = 0.22; g.fillStyle = cTeal; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, m * 0.3, -0.45, 0); g.closePath(); g.fill();
+      g.globalAlpha = 0.9; g.strokeStyle = cTeal; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(m * 0.3, 0); g.stroke(); g.restore();
+      var rx = m * 0.3, ry = m * 0.11, ang = p * 6.283 * 1.5;
+      g.save(); g.translate(cx, cy); g.rotate(-0.43);
+      g.globalAlpha = 0.6; g.strokeStyle = cAcc; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, 6.283); g.stroke();
+      var sx = Math.cos(ang) * rx, sy = Math.sin(ang) * ry;
+      g.globalAlpha = 0.25; g.fillStyle = cAmb; g.beginPath(); g.arc(sx, sy, 16, 0, 6.283); g.fill();
+      g.globalAlpha = 1; g.beginPath(); g.arc(sx, sy, 6, 0, 6.283); g.fill(); g.restore();
+      g.globalAlpha = 1; g.fillStyle = cAcc; g.beginPath(); g.arc(cx, cy, 10 + 3 * s, 0, 6.283); g.fill();
+      $("#lFill").style.width = (p * 100) + "%";
+      $("#lMsg").textContent = msgs[Math.min(2, Math.floor(p * 3))];
+      if (p >= 1) finish(); else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  $("#wGo").addEventListener("click", startLaunch);
+
+  /* radar ping where you click */
+  document.addEventListener("pointerdown", function (e) {
+    if (reduced) return;
+    var d = document.createElement("span"); d.className = "ping"; d.style.left = e.clientX + "px"; d.style.top = e.clientY + "px";
+    d.addEventListener("animationend", function () { d.remove(); }); document.body.appendChild(d);
+  });
+  document.addEventListener("keydown", wkey);
+  $("#wGo").focus();
+})();
+</script>
+
+</body></html>
